@@ -1,0 +1,12 @@
+{% block html %}
+  <p>Hi {{username}},</p>
+
+  <p>You just signed up for my WiStem, using:
+      <dl>
+        <dt>username</dt><dd>{{username}}</dd>
+        <dt>email</dt><dd>{{email}}</dd>
+      </dl>
+  </p>
+
+  <p>Thanks, you rock!</p>
+{% endblock %}
