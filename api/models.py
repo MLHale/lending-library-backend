@@ -12,7 +12,33 @@ from __future__ import unicode_literals
 from django.db import models
 from django.contrib.auth.models import User
 from rest_framework_json_api import serializers
+from django.core.validators import *
 
+class Checkout(models.Model):
+    #REGEX for phone number validation
+    phone_regex = RegexValidator(regex=r'^\+?1?\d{9,15}$', message="Phone number must be entered in the format: '+999999999'. Up to 15 digits allowed.")
+
+    firstname = models.CharField(max_length=1000, blank=False)
+    lastname = models.CharField(max_length=1000, blank=False)
+    address = models.CharField(max_length=254, blank = False)
+    phonenumber = models.CharField(validators=[phone_regex], max_length=17, blank=False)
+    numberofstudents = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(99)], blank=False)
+    createdon = models.DateField(auto_now_add = True, blank = False)
+    fulfilledon = models.DateField(null = True, blank = True)
+    returnedon = models.DateField(null = True, blank = True)
+    missingparts = models.TextField(max_length=1000, blank=True)
+
+    def __str__(self):
+        return str(self.lastname) + ', ' + str(self.firstname)
+
+class Item(models.Model):
+    partname = models.CharField(max_length=1000, blank=False)
+    owner = models.OneToOneField(User, on_delete=models.CASCADE,  related_name = 'items', blank = False)
+    description = models.TextField(max_length=1000, blank=False)
+    checkedoutto = models.ForeignKey(Checkout, on_delete=models.CASCADE,  related_name = 'items', null = True, blank = True)
+
+    def __str__(self):
+        return str(self.partname)
 
 class Profile(models.Model):
     UNL = 'unl'
@@ -169,6 +195,30 @@ class UserSerializer(serializers.ModelSerializer):
 		model = User
 		fields = ('id', 'username', 'lastname', 'firstname', 'email', 'issuperuser')
 
+class InternalItemSerializer(serializers.ModelSerializer):
+    owner = UserSerializer(read_only = True)
+    #checkedoutto = CheckoutSerializer(read_only = True)
+    class Meta:
+        model = Item
+        fields = ('id', 'owner', 'description')
+
+class CheckoutSerializer(serializers.ModelSerializer):
+    parts = InternalItemSerializer(read_only = True, many = True)
+
+    class Meta:
+        model = Checkout
+        fields = ('id', 'parts', 'firstname', 'lastname', 'address', 'phonenumber', 'numberofstudents', 'createdon', 'fulfilledon', 'returnedon', 'missingparts' )
+
+    class JSONAPIMeta:
+        included_resources = ['parts']
+
+class ItemSerializer(serializers.ModelSerializer):
+    owner = UserSerializer(read_only = True)
+    checkedoutto = CheckoutSerializer(read_only = True)
+
+    class Meta:
+        model = Item
+        fields = ('id', 'owner', 'description', 'checkedoutto')
 
 class ProfileSerializer(serializers.ModelSerializer):
     included_serializers = {
