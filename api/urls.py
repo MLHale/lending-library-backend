@@ -28,6 +28,8 @@ router.register(r'awardpurposes', controllers.AwardpurposeViewSet)
 router.register(r'areaofinterests', controllers.AreaofinterestViewSet)
 router.register(r'applicanttypes', controllers.ApplicanttypeViewSet)
 router.register(r'sources', controllers.SourceViewSet)
+router.register(r'checkouts', controllers.CheckoutViewSet)
+router.register(r'items', controllers.ItemViewSet)
 
 urlpatterns = [
     url(r'^session', csrf_exempt(controllers.Session.as_view())),
