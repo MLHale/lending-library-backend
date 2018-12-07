@@ -221,7 +221,7 @@ class CheckoutSerializer(serializers.ModelSerializer):
 
 class ItemSerializer(serializers.ModelSerializer):
     #owner = UserSerializer(read_only = True)
-    #checkedoutto = CheckoutSerializer(read_only = True)
+    checkedoutto = CheckoutSerializer(read_only = True)
 
     class Meta:
         model = Item
