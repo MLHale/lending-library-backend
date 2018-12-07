@@ -24,7 +24,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.renderers import JSONRenderer
 from django_filters.rest_framework import DjangoFilterBackend
-
+from rest_framework.decorators import action
 
 
 
@@ -40,7 +40,8 @@ from api.pagination import *
 
 from django.core import serializers
 from django.core.exceptions import ValidationError
-
+from api.models import Item
+from django.db.models import Count
 
 import bleach
 
@@ -144,6 +145,7 @@ class ItemViewSet(viewsets.ModelViewSet):
 	filter_fileds = ('id', 'partname', 'owner', 'checkedoutto')
 
 	def create(self, request):
+
 		admin_or_401(request)
 
 		serializer = api.ItemSerializer(data=request.data)
@@ -165,10 +167,12 @@ class ItemViewSet(viewsets.ModelViewSet):
 
 		return Response(serializer.data)
 
-def itemscount(request,pk):
-	items = Item.objects.filter(item=pk)
-	sumitems = Item.objects.filter(item=pk).aggregate(quantity__sum=Coalesce(Sum('quantity'),0.0))
-	return Response(request.data)
+	@action(detail=False)
+	def count(self, request):
+		partname = self.request.query_params.get('partname', None)
+		items = Item.objects.all().filter(partname=partname)
+		countitems = items.aggregate(Count('partname'))
+		return Response({'count': countitems})
 
 class UserViewSet(viewsets.ModelViewSet):
 	"""
