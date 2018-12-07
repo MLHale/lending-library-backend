@@ -97,6 +97,76 @@ class AwardViewSet(viewsets.ModelViewSet):
 
         return Response(serializer.data)
 
+class CheckoutViewSet(viewsets.ModelViewSet):
+	"""
+	Endpoint that loads the people checking out the Items
+	"""
+	resource_name = 'checkouts'
+	queryset = api.Checkout.objects.all()
+	serializer_class = api.CheckoutSerializer
+	permission_classes = (AllowAny,)
+	filter_fileds = ('id', 'firstname', 'lastname')
+
+	def create(self, request):
+		admin_or_401(request)
+
+		serializer = api.CheckoutSerializer(data=request.data)
+		if not serializer.is_valid():
+			return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+		serializer.save()
+
+		return Response(serializer.data)
+
+	def update(self, request, pk=None):
+		admin_or_401(request)
+
+		serializer = api.CheckoutSerializer(data=request.data)
+		if not serializer.is_valid():
+			return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+		serializer.save()
+
+		return Response(serializer.data)
+
+
+class ItemViewSet(viewsets.ModelViewSet):
+	"""
+	Endpoint to view the items
+	"""
+	resource_name = 'items'
+	serializer_class = api.ItemSerializer
+	queryset = api.Item.objects.all()
+	permission_classes = (AllowAny,)
+	filter_fileds = ('id', 'partname', 'owner', 'checkedoutto')
+
+	def create(self, request):
+		admin_or_401(request)
+
+		serializer = api.ItemSerializer(data=request.data)
+		if not serializer.is_valid():
+			return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+		serializer.save()
+
+		return Response(serializer.data)
+
+	def update(self, request, pk=None):
+		admin_or_401(request)
+
+		serializer = api.ItemSerializer(data=request.data)
+		if not serializer.is_valid():
+			return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+		serializer.save()
+
+		return Response(serializer.data)
+
+def itemscount(request,pk):
+	items = Item.objects.filter(item=pk)
+	sumitems = Item.objects.filter(item=pk).aggregate(quantity__sum=Coalesce(Sum('quantity'),0.0))
+	return Response(request.data)
+
 class UserViewSet(viewsets.ModelViewSet):
 	"""
 	Endpoint that allows user data to be viewed.

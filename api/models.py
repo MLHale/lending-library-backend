@@ -23,7 +23,7 @@ class Checkout(models.Model):
     address = models.CharField(max_length=254, blank = False)
     phonenumber = models.CharField(validators=[phone_regex], max_length=17, blank=False)
     numberofstudents = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(99)], blank=False)
-    createdon = models.DateField(auto_now_add = True, blank = False)
+    createdon = models.DateTimeField(null = True, blank = True)
     fulfilledon = models.DateField(null = True, blank = True)
     returnedon = models.DateField(null = True, blank = True)
     missingparts = models.TextField(max_length=1000, blank=True)
@@ -31,14 +31,21 @@ class Checkout(models.Model):
     def __str__(self):
         return str(self.lastname) + ', ' + str(self.firstname)
 
+    class JSONAPIMeta:
+		resource_name = "checkouts"
+
+
 class Item(models.Model):
-    partname = models.CharField(max_length=1000, blank=False)
-    owner = models.OneToOneField(User, on_delete=models.CASCADE,  related_name = 'items', blank = False)
+    partname = models.CharField(max_length=100, blank=False)
+    owner = models.OneToOneField(User, on_delete=models.CASCADE, related_name='items', blank=False)
     description = models.TextField(max_length=1000, blank=False)
-    checkedoutto = models.ForeignKey(Checkout, on_delete=models.CASCADE,  related_name = 'items', null = True, blank = True)
+    checkedoutto = models.ForeignKey(Checkout, on_delete=models.CASCADE, related_name='items', null=True, blank=True)
 
     def __str__(self):
         return str(self.partname)
+
+class JSONAPIMeta:
+    resource_name = "items"
 
 class Profile(models.Model):
     UNL = 'unl'
@@ -213,12 +220,12 @@ class CheckoutSerializer(serializers.ModelSerializer):
         included_resources = ['parts']
 
 class ItemSerializer(serializers.ModelSerializer):
-    owner = UserSerializer(read_only = True)
-    checkedoutto = CheckoutSerializer(read_only = True)
+    #owner = UserSerializer(read_only = True)
+    #checkedoutto = CheckoutSerializer(read_only = True)
 
     class Meta:
         model = Item
-        fields = ('id', 'owner', 'description', 'checkedoutto')
+        fields = ('id', 'partname', 'owner', 'description', 'checkedoutto')
 
 class ProfileSerializer(serializers.ModelSerializer):
     included_serializers = {
