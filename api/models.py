@@ -37,7 +37,7 @@ class Checkout(models.Model):
 
 class Item(models.Model):
     partname = models.CharField(max_length=100, blank=False)
-    owner = models.OneToOneField(User, on_delete=models.CASCADE, related_name='items', blank=False)
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='items', blank=False)
     description = models.TextField(max_length=1000, blank=False)
     checkedoutto = models.ForeignKey(Checkout, on_delete=models.CASCADE, related_name='items', null=True, blank=True)
 
