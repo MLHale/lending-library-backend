@@ -37,15 +37,15 @@ class Checkout(models.Model):
 
 class Item(models.Model):
     partname = models.CharField(max_length=100, blank=False)
-    owner = models.OneToOneField(User, on_delete=models.CASCADE, related_name='items', blank=False)
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='items', blank=False)
     description = models.TextField(max_length=1000, blank=False)
-    checkedoutto = models.ForeignKey(Checkout, on_delete=models.CASCADE, related_name='items', null=True, blank=True)
+    checkedoutto = models.ForeignKey(Checkout, on_delete=models.CASCADE, related_name='items', null = True, blank=True)
 
     def __str__(self):
         return str(self.partname)
 
-class JSONAPIMeta:
-    resource_name = "items"
+    class JSONAPIMeta:
+        resource_name = "items"
 
 class Profile(models.Model):
     UNL = 'unl'
@@ -203,29 +203,41 @@ class UserSerializer(serializers.ModelSerializer):
 		fields = ('id', 'username', 'lastname', 'firstname', 'email', 'issuperuser')
 
 class InternalItemSerializer(serializers.ModelSerializer):
-    owner = UserSerializer(read_only = True)
+    #owner = UserSerializer(read_only = True)
     #checkedoutto = CheckoutSerializer(read_only = True)
+    included_serializers = {'owner': UserSerializer,}
+
     class Meta:
         model = Item
-        fields = ('id', 'owner', 'description')
+        fields = ('id', 'partname', 'owner', 'description')
+
+    class JSONAPIMeta:
+        included_resources = ['owner']
+
 
 class CheckoutSerializer(serializers.ModelSerializer):
-    parts = InternalItemSerializer(read_only = True, many = True)
+    items = InternalItemSerializer(read_only = True, many = True)
+    #included_serializers = {'items', InternalItemSerializer}
 
     class Meta:
         model = Checkout
-        fields = ('id', 'parts', 'firstname', 'lastname', 'address', 'phonenumber', 'numberofstudents', 'createdon', 'fulfilledon', 'returnedon', 'missingparts' )
+        fields = ('id', 'items', 'firstname', 'lastname', 'address', 'phonenumber', 'numberofstudents', 'createdon', 'fulfilledon', 'returnedon', 'missingparts' )
 
     class JSONAPIMeta:
-        included_resources = ['parts']
+        included_resources = ['items']
 
 class ItemSerializer(serializers.ModelSerializer):
     #owner = UserSerializer(read_only = True)
-    checkedoutto = CheckoutSerializer(read_only = True)
+    #checkedoutto = CheckoutSerializer(read_only = True)
+    included_serializers = {'owner': UserSerializer, 'checkedoutto': CheckoutSerializer,}
 
     class Meta:
         model = Item
-        fields = ('id', 'partname', 'owner', 'description', 'checkedoutto')
+        #fields = ('id', 'partname', 'owner', 'description', 'checkedoutto')
+        fields = '__all__'
+
+    class JSONAPIMeta:
+        included_resources = ['owner', 'checkedoutto']
 
 class ProfileSerializer(serializers.ModelSerializer):
     included_serializers = {
