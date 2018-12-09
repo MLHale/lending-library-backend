@@ -102,11 +102,11 @@ class CheckoutViewSet(viewsets.ModelViewSet):
 	"""
 	Endpoint that loads the people checking out the Items
 	"""
+	permission_classes = (AllowAny,)
 	resource_name = 'checkouts'
 	queryset = api.Checkout.objects.all()
 	serializer_class = api.CheckoutSerializer
-	permission_classes = (AllowAny,)
-	filter_fileds = ('id', 'firstname', 'lastname')
+	filter_fields = ('id', 'firstname', 'lastname')
 
 	def create(self, request):
 		admin_or_401(request)
@@ -129,7 +129,6 @@ class CheckoutViewSet(viewsets.ModelViewSet):
 		serializer.save()
 
 		return Response(serializer.data)
-
 
 """
 This is a test
