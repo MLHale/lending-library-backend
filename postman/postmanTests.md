@@ -13,3 +13,13 @@ Status: Success
 ### GET /api/items/<id>
 Status: Success
 ![](images/items_get_by_id.png)
+
+## Testing checkouts
+
+### GET /api/checkouts
+Status: Broken
+![]()
+
+### GET /api/checkouts/<id>
+Status: Broken
+![]()
