@@ -175,7 +175,7 @@ class ItemViewSet(viewsets.ModelViewSet):
 	#
 	# 	return Response(serializer.data)
 
-	# def update(self, request, pk=None):
+	def update(self, request, pk=None):
 		admin_or_401(request)
 
 		serializer = api.ItemSerializer(data=request.data)
