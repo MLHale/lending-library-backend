@@ -174,16 +174,16 @@ class ItemViewSet(viewsets.ModelViewSet):
 	#
 	# 	return Response(serializer.data)
 
-	def update(self, request, pk=None):
-		admin_or_401(request)
-
-		serializer = api.ItemSerializer(data=request.data)
-		if not serializer.is_valid():
-			return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-		serializer.save()
-
-		return Response(serializer.data)
+	# def update(self, request, pk=None):
+	# 	admin_or_401(request)
+	#
+	# 	serializer = api.ItemSerializer(data=request.data)
+	# 	if not serializer.is_valid():
+	# 		return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+	#
+	# 	serializer.save()
+	#
+	# 	return Response(serializer.data)
 
 	@action(detail=False)
 	def count(self, request):
