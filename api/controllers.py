@@ -141,13 +141,13 @@ class ItemViewSet(viewsets.ModelViewSet):
 	serializer_class = api.ItemSerializer
 	queryset = api.Item.objects.all()
 	permission_classes = (AllowAny,)
-	filter_fileds = ('id', 'partname', 'owner', 'checkedoutto')
+	filter_fileds = ('id', 'partname', 'owner', 'checkedoutto', 'description')
 
 	def create(self, request):
 		partname = request.data.get('partname')
-	    owner = request.data.get('owner')
-	    description = request.data.get('description')
-	    checkedoutto = request.data.get('checkedoutto')
+		owner = request.data.get('owner')
+		description = request.data.get('description')
+		checkedoutto = request.data.get('checkedoutto')
 
 		newItem = Item(
 			partname=partname,
@@ -156,12 +156,12 @@ class ItemViewSet(viewsets.ModelViewSet):
 			checkedoutto=checkedoutto
 		)
 		try:
-            newItem.clean_fields()
-        except ValidationError as e:
-            print e
-            print str(request.data.get('owner'))
-			print str(request.data.get('checkedoutto'))
-            return Response({'success':False, 'error':e}, status=status.HTTP_400_BAD_REQUEST)
+			newItem.clean_fields()
+		except ValidationError as e:
+			print(e)
+			print(str(request.data.get('owner')))
+			print(str(request.data.get('checkedoutto')))
+			return Response({'success':False, 'error':e}, status=status.HTTP_400_BAD_REQUEST)
 	# def create(self, request):
 	#
 	# 	admin_or_401(request)
