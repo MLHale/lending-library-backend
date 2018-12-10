@@ -145,24 +145,24 @@ class ItemViewSet(viewsets.ModelViewSet):
 
 	def create(self, request):
 
-		# partname = request.data.get('partname')
-		# owner = request.data.get('owner')
-		# description = request.data.get('description')
-		# checkedoutto = request.data.get('checkedoutto')
-		#
-		# newItem = Item(
-		# 	partname=partname,
-		# 	owner=owner,
-		# 	description=description,
-		# 	checkedoutto=checkedoutto
-		# )
-		# try:
-		# 	newItem.clean_fields()
-		# except ValidationError as e:
-		# 	print(e)
-		# 	print(str(request.data.get('owner')))
-		# 	print(str(request.data.get('checkedoutto')))
-		# 	return Response({'success':False, 'error':e}, status=status.HTTP_400_BAD_REQUEST)
+		partname = request.data.get('partname')
+		owner = request.data.get('owner')
+		description = request.data.get('description')
+		checkedoutto = request.data.get('checkedoutto')
+
+		newItem = Item(
+			partname=partname,
+			owner=owner,
+			description=description,
+			checkedoutto=checkedoutto
+		)
+		try:
+			newItem.clean_fields()
+		except ValidationError as e:
+			print(e)
+			print(str(request.data.get('owner')))
+			print(str(request.data.get('checkedoutto')))
+			return Response({'success':False, 'error':e}, status=status.HTTP_400_BAD_REQUEST)
 	# def create(self, request):
 	#
 	# 	admin_or_401(request)
@@ -176,15 +176,15 @@ class ItemViewSet(viewsets.ModelViewSet):
 	# 	return Response(serializer.data)
 
 	# def update(self, request, pk=None):
-	# 	admin_or_401(request)
-	#
-	# 	serializer = api.ItemSerializer(data=request.data)
-	# 	if not serializer.is_valid():
-	# 		return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-	#
-	# 	serializer.save()
-	#
-	# 	return Response(serializer.data)
+		admin_or_401(request)
+
+		serializer = api.ItemSerializer(data=request.data)
+		if not serializer.is_valid():
+			return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+		serializer.save()
+
+		return Response(serializer.data)
 
 	@action(detail=False)
 	def count(self, request):
