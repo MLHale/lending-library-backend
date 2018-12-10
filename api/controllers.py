@@ -130,9 +130,6 @@ class CheckoutViewSet(viewsets.ModelViewSet):
 
 		return Response(serializer.data)
 
-"""
-This is a test
-"""
 class ItemViewSet(viewsets.ModelViewSet):
 	"""
 	Endpoint to view the items
