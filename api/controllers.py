@@ -140,12 +140,15 @@ class ItemViewSet(viewsets.ModelViewSet):
 	permission_classes = (AllowAny,)
 	filter_fileds = ('id', 'partname', 'owner', 'checkedoutto', 'description')
 
-	def create(self, request):
+	def create(self, request, *args, **kwargs):
 
 		partname = request.data.get('partname')
-		owner = request.data.get('owner')
+		owner = Owner.objects.get(pk=request.data.get('owner'))
 		description = request.data.get('description')
-		checkedoutto = request.data.get('checkedoutto')
+		checkedoutto = Checkout.objects.get(pk=request.data.get('checkedoutto'))
+
+		print(owner)
+		print(checkedoutto)
 
 		newItem = Item(
 			partname=partname,
