@@ -148,8 +148,10 @@ class ItemViewSet(viewsets.ModelViewSet):
 		partname = request.data.get('partname')
 		owner = api.User.objects.get(pk=request.data.get('owner').get('id'))
 		description = request.data.get('description')
-		checkedoutto = api.Checkout.objects.get(pk=request.data.get('checkedoutto').get('id'))
-
+		if request.data.get('checkedoutto') is not None:
+			checkedoutto = api.Checkout.objects.get(pk=request.data.get('checkedoutto').get('id'))
+		else:
+			checkedoutto = None
 		# owner = UserSerializer(get_object_or_404(User, user__id=request.data.get('owner')))
 		# serializer = ProfileSerializer(get_object_or_404(Profile, user__id=userid))
 
