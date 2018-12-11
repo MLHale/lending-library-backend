@@ -142,10 +142,16 @@ class ItemViewSet(viewsets.ModelViewSet):
 
 	def create(self, request, *args, **kwargs):
 
+		print(request.data.get('owner'))
+		print(request.data.get('checkedoutto'))
+
 		partname = request.data.get('partname')
-		owner = Owner.objects.get(pk=request.data.get('owner'))
+		owner = api.User.objects.get(pk=request.data.get('owner').get('id'))
 		description = request.data.get('description')
-		checkedoutto = Checkout.objects.get(pk=request.data.get('checkedoutto'))
+		checkedoutto = api.Checkout.objects.get(pk=request.data.get('checkedoutto').get('id'))
+
+		# owner = UserSerializer(get_object_or_404(User, user__id=request.data.get('owner')))
+		# serializer = ProfileSerializer(get_object_or_404(Profile, user__id=userid))
 
 		print(owner)
 		print(checkedoutto)
@@ -163,6 +169,10 @@ class ItemViewSet(viewsets.ModelViewSet):
 			print(str(request.data.get('owner')))
 			print(str(request.data.get('checkedoutto')))
 			return Response({'success':False, 'error':e}, status=status.HTTP_400_BAD_REQUEST)
+
+		newItem.save()
+		return Response({'success': True}, status=status.HTTP_200_OK)
+
 	# def create(self, request):
 	#
 	# 	admin_or_401(request)
