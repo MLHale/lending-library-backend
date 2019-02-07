@@ -34,5 +34,5 @@ router.register(r'items', controllers.ItemViewSet)
 urlpatterns = [
     url(r'^session', csrf_exempt(controllers.Session.as_view())),
     url(r'^register', csrf_exempt(controllers.Register.as_view())),
-    url(r'^', include(router.urls)),    
+    url(r'^', include(router.urls)),
 ]
