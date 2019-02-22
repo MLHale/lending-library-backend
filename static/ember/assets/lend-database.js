@@ -1854,6 +1854,14 @@
   });
   exports.default = _emberData.default.Model.extend({});
 });
+;define('lend-database/models/category', ['exports', 'ember-data'], function (exports, _emberData) {
+  'use strict';
+
+  Object.defineProperty(exports, "__esModule", {
+    value: true
+  });
+  exports.default = _emberData.default.Model.extend({});
+});
 ;define('lend-database/models/checkout', ['exports', 'ember-data'], function (exports, _emberData) {
   'use strict';
 
@@ -1885,18 +1893,17 @@
   });
 });
 ;define('lend-database/models/item', ['exports', 'ember-data'], function (exports, _emberData) {
-  'use strict';
+    'use strict';
 
-  Object.defineProperty(exports, "__esModule", {
-    value: true
-  });
-  exports.default = _emberData.default.Model.extend({
-    partName: _emberData.default.attr(),
-    owner: _emberData.default.attr(),
-    description: _emberData.default.attr(),
-    checkoutto: _emberData.default.attr()
-
-  });
+    Object.defineProperty(exports, "__esModule", {
+        value: true
+    });
+    exports.default = _emberData.default.Model.extend({
+        partName: _emberData.default.attr(),
+        owner: _emberData.default.attr(),
+        description: _emberData.default.attr(),
+        checkoutto: _emberData.default.attr()
+    });
 });
 ;define('lend-database/models/profile', ['exports', 'ember-data'], function (exports, _emberData) {
   'use strict';
@@ -2118,38 +2125,35 @@
   Object.defineProperty(exports, "__esModule", {
     value: true
   });
-
-
-  var defaultitems = Ember.A([{
-    title: 'Lending Library',
-    description: 'Exciting stuff!',
-    img: 'img/NGC-logo.png',
-    link: '',
-    link_external: 'http://mlhale.github.io/lending-library'
-  }, {
-    title: 'Masonry-based Event Display Template',
-    description: 'You are seeing this template, because you haven\'t loaded any data into your client yet. This Template will be used to display events as they load from your REST API.',
-    img: 'img/template-icon.svg',
-    link: 'index'
-  }]);
-
   exports.default = Ember.Route.extend({
     getData() {
       var items = Ember.A([]);
-      return Ember.$.get('/api').then(function (events) {
-        events.forEach(function (event) {
-          // console.log(event);
+      return Ember.$.get('/api/items').then(function (events) {
+        console.log(events);
+        events.data.forEach(function (event) {
+          console.log("----------------------------");
+          console.log(event.attributes.description);
+          console.log(event.attributes.partname);
+
           items.addObject({
-            id: event.pk,
-            eventtype: event.fields.eventtype,
-            requestor: event.fields.requestor,
-            timestamp: event.fields.timestamp,
-            userid: event.fields.userid,
-            img: 'img/event-icon.jpg',
-            link: 'index'
+            partname: event.attributes.partname,
+            description: event.attributes.description
           });
         });
         return items.reverse();
+        // events.forEach(function(event){
+        //   // console.log(event);
+        //   items.addObject({
+        //     id: event.pk,
+        //     eventtype: event.fields.eventtype,
+        //     requestor: event.fields.requestor,
+        //     timestamp: event.fields.timestamp,
+        //     userid: event.fields.userid,
+        //     img: 'img/event-icon.jpg',
+        //     link: 'index'
+        //   });
+        // });
+        // return items.reverse()
       }, function (msg) {
         //error
         console.log('Error loading events:');
@@ -2161,7 +2165,7 @@
     },
     setupController(controller, model) {
       this._super(controller, model);
-      controller.set('defaultitems', defaultitems);
+      this.set('items', this.getData());
       var route = this;
       setInterval(Ember.run.later(route, function () {
         // code here will execute within a RunLoop about every minute
@@ -2210,9 +2214,10 @@
   exports.default = Ember.Route.extend({
     getData() {
       var items = Ember.A([]);
-      return Ember.$.get('/api').then(function (events) {
+      return Ember.$.get('/api/projects').then(function (events) {
+        console.log(events);
         events.forEach(function (event) {
-          // console.log(event);
+          console.log(event);
           items.addObject({
             id: event.pk,
             eventtype: event.fields.eventtype,
@@ -2336,7 +2341,7 @@
   Object.defineProperty(exports, "__esModule", {
     value: true
   });
-  exports.default = Ember.HTMLBars.template({ "id": "UunZjEB0", "block": "{\"symbols\":[],\"statements\":[[1,[21,\"outlet\"],false],[0,\"\\n\\n\"],[7,\"br\"],[9],[10],[0,\"The Lending Library App is a search-oriented library management app for maintaining the UNO lending library.\"],[7,\"br\"],[9],[10],[0,\"\\n\\n\"],[7,\"br\"],[9],[10],[0,\"This program is free software. You can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.\"],[7,\"br\"],[9],[10],[0,\"\\n\\n\"],[7,\"br\"],[9],[10],[0,\"This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.\"],[7,\"br\"],[9],[10],[0,\"\\n\\n\"],[7,\"br\"],[9],[10],[0,\"You should have received a copy of the \"],[7,\"a\"],[11,\"href\",\"http://www.gnu.org/licenses/\"],[9],[0,\"GNU General Public License \"],[10],[0,\" along with this program.\\n\"],[7,\"br\"],[9],[10],[0,\"\\n\"],[7,\"br\"],[9],[10],[0,\"Copyright © 2018 Matt Hale and CYBR8470 class.\"],[7,\"br\"],[9],[10],[0,\"\\n\"]],\"hasEval\":false}", "meta": { "moduleName": "lend-database/templates/about.hbs" } });
+  exports.default = Ember.HTMLBars.template({ "id": "5sDJIP+L", "block": "{\"symbols\":[],\"statements\":[[1,[21,\"outlet\"],false],[0,\"\\n\"],[7,\"center\"],[9],[7,\"img\"],[11,\"src\",\"/static/ember/assets/uno_logo.png\"],[11,\"alt\",\"UNO logo\"],[11,\"width\",\"20%\"],[11,\"style\",\"padding-bottom: 10px;\"],[9],[10],[10],[0,\"\\n\"],[7,\"br\"],[9],[10],[0,\"The Lending Library App is a search-oriented library management app for maintaining the UNO lending library.\"],[7,\"br\"],[9],[10],[0,\"\\n\\n\"],[7,\"br\"],[9],[10],[0,\"This program is free software. You can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.\"],[7,\"br\"],[9],[10],[0,\"\\n\\n\"],[7,\"br\"],[9],[10],[0,\"This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.\"],[7,\"br\"],[9],[10],[0,\"\\n\\n\"],[7,\"br\"],[9],[10],[0,\"You should have received a copy of the \"],[7,\"a\"],[11,\"href\",\"http://www.gnu.org/licenses/\"],[9],[0,\"GNU General Public License \"],[10],[0,\" along with this program.\\n\"],[7,\"br\"],[9],[10],[0,\"\\n\"],[7,\"br\"],[9],[10],[0,\"Copyright © 2018 Matt Hale and CYBR8470 class.\"],[7,\"br\"],[9],[10],[0,\"\\n\"]],\"hasEval\":false}", "meta": { "moduleName": "lend-database/templates/about.hbs" } });
 });
 ;define("lend-database/templates/application", ["exports"], function (exports) {
   "use strict";
@@ -2434,7 +2439,7 @@
   Object.defineProperty(exports, "__esModule", {
     value: true
   });
-  exports.default = Ember.HTMLBars.template({ "id": "Czr7Fwv8", "block": "{\"symbols\":[\"obj\"],\"statements\":[[1,[21,\"outlet\"],false],[0,\"\\n\"],[7,\"div\"],[11,\"class\",\"jumbotron text-center\"],[9],[0,\"\\n  \"],[7,\"h1\"],[9],[0,\"Welcome to the University of Nebraska at Omaha Technology Lending Library\"],[7,\"br\"],[9],[10],[10],[0,\"\\n\"],[10],[0,\"\\n\\n\\n\"],[4,\"each\",[[23,[\"objlist\"]]],null,{\"statements\":[[0,\"  \"],[7,\"img\"],[12,\"src\",[28,[\"/assets/\",[22,1,[\"link\"]]]]],[11,\"height\",\"100\"],[11,\"width\",\"150\"],[11,\"alt\",\"\"],[9],[10],[0,\" \\n  \"],[1,[22,1,[\"name\"]],false],[0,\"\\n  \"],[1,[22,1,[\"qty\"]],false],[0,\"\\n\"]],\"parameters\":[1]},null],[7,\"div\"],[11,\"class\",\"row\"],[9],[0,\"\\n\\n  \"],[7,\"div\"],[11,\"class\",\"col-lg-4 col-md-6 mb-4\"],[9],[0,\"\\n    \"],[7,\"div\"],[11,\"class\",\"card h-100\"],[9],[0,\"\\n      \"],[7,\"a\"],[11,\"href\",\"#\"],[9],[7,\"img\"],[11,\"alt\",\"image\"],[11,\"class\",\"card-img-top\"],[11,\"src\",\"localhost/image\"],[9],[10],[10],[0,\"\\n      \"],[7,\"div\"],[11,\"class\",\"card-body\"],[9],[0,\"\\n        \"],[7,\"h4\"],[11,\"class\",\"card-title\"],[9],[0,\"\\n          \"],[7,\"a\"],[11,\"href\",\"#\"],[9],[0,\"Product 1\"],[10],[0,\"\\n        \"],[10],[0,\"\\n        \"],[7,\"h5\"],[9],[0,\"$124.99\"],[10],[0,\"\\n        \"],[7,\"p\"],[11,\"class\",\"card-text\"],[9],[0,\"This is a product example!\"],[10],[0,\"\\n      \"],[10],[0,\"\\n    \"],[10],[0,\"\\n  \"],[10],[0,\"\\n\\n  \"],[7,\"div\"],[11,\"class\",\"col-lg-4 col-md-6 mb-4\"],[9],[0,\"\\n    \"],[7,\"div\"],[11,\"class\",\"card h-100\"],[9],[0,\"\\n      \"],[7,\"a\"],[11,\"href\",\"#\"],[9],[7,\"img\"],[11,\"alt\",\"image\"],[11,\"class\",\"card-img-top\"],[11,\"src\",\"localhost/image\"],[9],[10],[10],[0,\"\\n      \"],[7,\"div\"],[11,\"class\",\"card-body\"],[9],[0,\"\\n        \"],[7,\"h4\"],[11,\"class\",\"card-title\"],[9],[0,\"\\n          \"],[7,\"a\"],[11,\"href\",\"#\"],[9],[0,\"Product 2\"],[10],[0,\"\\n        \"],[10],[0,\"\\n        \"],[7,\"h5\"],[9],[0,\"$124.99\"],[10],[0,\"\\n        \"],[7,\"p\"],[11,\"class\",\"card-text\"],[9],[0,\"This is a product example!\"],[10],[0,\"\\n      \"],[10],[0,\"\\n    \"],[10],[0,\"\\n  \"],[10],[0,\"\\n\\n  \"],[7,\"div\"],[11,\"class\",\"col-lg-4 col-md-6 mb-4\"],[9],[0,\"\\n    \"],[7,\"div\"],[11,\"class\",\"card h-100\"],[9],[0,\"\\n      \"],[7,\"a\"],[11,\"href\",\"#\"],[9],[7,\"img\"],[11,\"alt\",\"image\"],[11,\"class\",\"card-img-top\"],[11,\"src\",\"localhost/image\"],[9],[10],[10],[0,\"\\n      \"],[7,\"div\"],[11,\"class\",\"card-body\"],[9],[0,\"\\n        \"],[7,\"h4\"],[11,\"class\",\"card-title\"],[9],[0,\"\\n          \"],[7,\"a\"],[11,\"href\",\"#\"],[9],[0,\"Product 3\"],[10],[0,\"\\n        \"],[10],[0,\"\\n        \"],[7,\"h5\"],[9],[0,\"$124.99\"],[10],[0,\"\\n        \"],[7,\"p\"],[11,\"class\",\"card-text\"],[9],[0,\"This is a product example!\"],[10],[0,\"\\n      \"],[10],[0,\"\\n    \"],[10],[0,\"\\n  \"],[10],[0,\"\\n\\n  \"],[7,\"div\"],[11,\"class\",\"col-lg-4 col-md-6 mb-4\"],[9],[0,\"\\n    \"],[7,\"div\"],[11,\"class\",\"card h-100\"],[9],[0,\"\\n      \"],[7,\"a\"],[11,\"href\",\"#\"],[9],[7,\"img\"],[11,\"alt\",\"image\"],[11,\"class\",\"card-img-top\"],[11,\"src\",\"localhost/image\"],[9],[10],[10],[0,\"\\n      \"],[7,\"div\"],[11,\"class\",\"card-body\"],[9],[0,\"\\n        \"],[7,\"h4\"],[11,\"class\",\"card-title\"],[9],[0,\"\\n          \"],[7,\"a\"],[11,\"href\",\"#\"],[9],[0,\"Product 4\"],[10],[0,\"\\n        \"],[10],[0,\"\\n        \"],[7,\"h5\"],[9],[0,\"$124.99\"],[10],[0,\"\\n        \"],[7,\"p\"],[11,\"class\",\"card-text\"],[9],[0,\"This is a product example!\"],[10],[0,\"\\n      \"],[10],[0,\"\\n    \"],[10],[0,\"\\n  \"],[10],[0,\"\\n\\n  \"],[7,\"div\"],[11,\"class\",\"col-lg-4 col-md-6 mb-4\"],[9],[0,\"\\n    \"],[7,\"div\"],[11,\"class\",\"card h-100\"],[9],[0,\"\\n      \"],[7,\"a\"],[11,\"href\",\"#\"],[9],[7,\"img\"],[11,\"alt\",\"image\"],[11,\"class\",\"card-img-top\"],[11,\"src\",\"localhost/image\"],[9],[10],[10],[0,\"\\n      \"],[7,\"div\"],[11,\"class\",\"card-body\"],[9],[0,\"\\n        \"],[7,\"h4\"],[11,\"class\",\"card-title\"],[9],[0,\"\\n          \"],[7,\"a\"],[11,\"href\",\"#\"],[9],[0,\"Product 5\"],[10],[0,\"\\n        \"],[10],[0,\"\\n        \"],[7,\"h5\"],[9],[0,\"$124.99\"],[10],[0,\"\\n        \"],[7,\"p\"],[11,\"class\",\"card-text\"],[9],[0,\"This is a product example!\"],[10],[0,\"\\n      \"],[10],[0,\"\\n    \"],[10],[0,\"\\n  \"],[10],[0,\"\\n\\n  \"],[7,\"div\"],[11,\"class\",\"col-lg-4 col-md-6 mb-4\"],[9],[0,\"\\n    \"],[7,\"div\"],[11,\"class\",\"card h-100\"],[9],[0,\"\\n      \"],[7,\"a\"],[11,\"href\",\"#\"],[9],[7,\"img\"],[11,\"alt\",\"image\"],[11,\"class\",\"card-img-top\"],[11,\"src\",\"localhost/image\"],[9],[10],[10],[0,\"\\n      \"],[7,\"div\"],[11,\"class\",\"card-body\"],[9],[0,\"\\n        \"],[7,\"h4\"],[11,\"class\",\"card-title\"],[9],[0,\"\\n          \"],[7,\"a\"],[11,\"href\",\"#\"],[9],[0,\"Product 6\"],[10],[0,\"\\n        \"],[10],[0,\"\\n        \"],[7,\"h5\"],[9],[0,\"$124.99\"],[10],[0,\"\\n        \"],[7,\"p\"],[11,\"class\",\"card-text\"],[9],[0,\"This is a product example!\"],[10],[0,\"\\n      \"],[10],[0,\"\\n    \"],[10],[0,\"\\n  \"],[10],[0,\"\\n\"],[10],[0,\"\\n\"]],\"hasEval\":false}", "meta": { "moduleName": "lend-database/templates/library.hbs" } });
+  exports.default = Ember.HTMLBars.template({ "id": "o/bSfP4b", "block": "{\"symbols\":[\"item\"],\"statements\":[[1,[21,\"outlet\"],false],[0,\"\\n\"],[7,\"div\"],[11,\"class\",\"jumbotron text-center\"],[9],[0,\"\\n  \"],[7,\"h1\"],[9],[0,\"Welcome to the University of Nebraska at Omaha Technology Lending Library\"],[7,\"br\"],[9],[10],[10],[0,\"\\n\"],[10],[0,\"\\n\\n\"],[7,\"div\"],[11,\"class\",\"row\"],[9],[0,\"\\n\"],[4,\"each\",[[22,0,[\"model\"]]],null,{\"statements\":[[0,\"    \"],[7,\"div\"],[11,\"class\",\"col-lg-4 col-md-6 mb-4\"],[9],[0,\"\\n      \"],[7,\"div\"],[11,\"class\",\"card h-100\"],[9],[0,\"\\n        \"],[7,\"a\"],[11,\"href\",\"#\"],[9],[7,\"img\"],[11,\"alt\",\"image\"],[11,\"class\",\"card-img-top\"],[11,\"src\",\"/static/ember/assets/rpi2b.jpg\"],[9],[10],[10],[0,\"\\n        \"],[7,\"div\"],[11,\"class\",\"card-body\"],[9],[0,\"\\n          \"],[7,\"h4\"],[11,\"class\",\"card-title\"],[9],[0,\"\\n            \"],[7,\"a\"],[11,\"href\",\"#\"],[9],[1,[22,1,[\"partname\"]],false],[10],[0,\"\\n          \"],[10],[0,\"\\n          \"],[7,\"h5\"],[9],[0,\"$124.99\"],[10],[0,\"\\n          \"],[7,\"p\"],[11,\"class\",\"card-text\"],[9],[1,[22,1,[\"description\"]],false],[10],[0,\"\\n        \"],[10],[0,\"\\n      \"],[10],[0,\"\\n    \"],[10],[0,\"\\n\"]],\"parameters\":[1]},null],[10]],\"hasEval\":false}", "meta": { "moduleName": "lend-database/templates/library.hbs" } });
 });
 ;define("lend-database/templates/login", ["exports"], function (exports) {
   "use strict";
@@ -2690,7 +2695,7 @@ catch(err) {
 
 ;
           if (!runningTests) {
-            require("lend-database/app")["default"].create({"name":"lend-database","version":"0.0.0+e29aa184"});
+            require("lend-database/app")["default"].create({"name":"lend-database","version":"0.0.0+d3f48ca1"});
           }
         
 //# sourceMappingURL=lend-database.map

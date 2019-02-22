@@ -4840,6 +4840,11 @@ define('lend-database/tests/lint/app.lint-test', [], function () {
     assert.ok(true, 'models/cart.js should pass ESLint\n\n');
   });
 
+  QUnit.test('models/category.js', function (assert) {
+    assert.expect(1);
+    assert.ok(true, 'models/category.js should pass ESLint\n\n');
+  });
+
   QUnit.test('models/checkout.js', function (assert) {
     assert.expect(1);
     assert.ok(true, 'models/checkout.js should pass ESLint\n\n');
@@ -4947,7 +4952,7 @@ define('lend-database/tests/lint/templates.template.lint-test', [], function () 
 
   QUnit.test('lend-database/templates/about.hbs', function (assert) {
     assert.expect(1);
-    assert.ok(true, 'lend-database/templates/about.hbs should pass TemplateLint.\n\n');
+    assert.ok(false, 'lend-database/templates/about.hbs should pass TemplateLint.\n\nlend-database/templates/about.hbs\n  2:80  error  elements cannot have inline styles  no-inline-styles\n  2:8  error  Self-closing a void element is redundant  self-closing-void-elements\n');
   });
 
   QUnit.test('lend-database/templates/application.hbs', function (assert) {
@@ -5103,6 +5108,11 @@ define('lend-database/tests/lint/tests.lint-test', [], function () {
   QUnit.test('unit/models/cart-test.js', function (assert) {
     assert.expect(1);
     assert.ok(true, 'unit/models/cart-test.js should pass ESLint\n\n');
+  });
+
+  QUnit.test('unit/models/category-test.js', function (assert) {
+    assert.expect(1);
+    assert.ok(true, 'unit/models/category-test.js should pass ESLint\n\n');
   });
 
   QUnit.test('unit/models/checkout-test.js', function (assert) {
@@ -5440,6 +5450,20 @@ define('lend-database/tests/unit/models/cart-test', ['qunit', 'ember-qunit'], fu
     (0, _qunit.test)('it exists', function (assert) {
       let store = this.owner.lookup('service:store');
       let model = store.createRecord('cart', {});
+      assert.ok(model);
+    });
+  });
+});
+define('lend-database/tests/unit/models/category-test', ['qunit', 'ember-qunit'], function (_qunit, _emberQunit) {
+  'use strict';
+
+  (0, _qunit.module)('Unit | Model | category', function (hooks) {
+    (0, _emberQunit.setupTest)(hooks);
+
+    // Replace this with your real tests.
+    (0, _qunit.test)('it exists', function (assert) {
+      let store = this.owner.lookup('service:store');
+      let model = store.createRecord('category', {});
       assert.ok(model);
     });
   });
