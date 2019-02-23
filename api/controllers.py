@@ -41,6 +41,7 @@ from api.pagination import *
 from django.core import serializers
 from django.core.exceptions import ValidationError
 from api.models import Item
+from api.models import Category
 from django.db.models import Count
 
 import bleach
@@ -203,6 +204,69 @@ class ItemViewSet(viewsets.ModelViewSet):
 		partname = self.request.query_params.get('partname', None)
 		items = Item.objects.all().filter(partname=partname)
 		countitems = items.aggregate(Count('partname'))
+		return Response({'count': countitems})
+
+class CategoriesViewSet(viewsets.ModelViewSet):
+	"""
+	Endpoint to view the categories
+	"""
+	resource_name = 'categories'
+	serializer_class = api.ItemSerializer
+	queryset = api.Item.objects.all()
+	permission_classes = (AllowAny,)
+	filter_fileds = ('id', 'categoryname', 'description')
+
+	def create(self, request, *args, **kwargs):
+
+		categoryname = request.data.get('categoryname')
+		description = request.data.get('description')
+
+		# owner = UserSerializer(get_object_or_404(User, user__id=request.data.get('owner')))
+		# serializer = ProfileSerializer(get_object_or_404(Profile, user__id=userid))
+
+		newCategory = Category(
+			categoryname=categoryname,
+			description=description,
+		)
+		try:
+			newCategory.clean_fields()
+		except ValidationError as e:
+			print(e)
+			print(str(request.data.get('categoryname')))
+			print(str(request.data.get('description')))
+			return Response({'success':False, 'error':e}, status=status.HTTP_400_BAD_REQUEST)
+
+		newCategory.save()
+		return Response({'success': True}, status=status.HTTP_200_OK)
+
+	# def create(self, request):
+	#
+	# 	admin_or_401(request)
+	#
+	# 	serializer = api.ItemSerializer(data=request.data)
+	# 	if not serializer.is_valid():
+	# 		return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+	#
+	# 	serializer.save()
+	#
+	# 	return Response(serializer.data)
+
+	def update(self, request, pk=None):
+		admin_or_401(request)
+
+		serializer = api.ItemSerializer(data=request.data)
+		if not serializer.is_valid():
+			return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+		serializer.save()
+
+		return Response(serializer.data)
+
+	@action(detail=False)
+	def count(self, request):
+		categoryname = self.request.query_params.get('categoryname', None)
+		categories = Category.objects.all().filter(categoryname=categoryname)
+		countitems = categories.aggregate(Count('categoryname'))
 		return Response({'count': countitems})
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -407,9 +471,9 @@ class ApplicanttypeViewSet(viewsets.ModelViewSet):
 
 
 class Register(APIView):
-    permission_classes = (AllowAny,)
+	permission_classes = (AllowAny,)
 
-    def post(self, request, *args, **kwargs):
+	def post(self, request, *args, **kwargs):
         # Login
 		username = request.POST.get('username')
 		password = request.POST.get('password')
@@ -424,9 +488,8 @@ class Register(APIView):
 	        # areas_of_interest = request.POST.get('areasofinterest')
 	        # areas_of_interest = api.Areaofinterest.objects.get_or_create(name=areas_of_interest)
 
-			print request.POST.get('username')
 			if User.objects.filter(username=username).exists():
-			    return Response({'username': 'Username is taken.', 'status': 'error'})
+				return Response({'username': 'Username is taken.', 'status': 'error'})
 			elif User.objects.filter(email=email).exists():
 			    return Response({'email': 'Email is taken.', 'status': 'error'})
 			# especially before you pass them in here

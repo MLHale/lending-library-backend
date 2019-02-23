@@ -32,7 +32,7 @@ class Checkout(models.Model):
         return str(self.lastname) + ', ' + str(self.firstname)
 
     class JSONAPIMeta:
-		resource_name = "checkouts"
+        resource_name = "checkouts"
 
 
 class Item(models.Model):
@@ -46,6 +46,16 @@ class Item(models.Model):
 
     class JSONAPIMeta:
         resource_name = "items"
+
+class Category(models.Model):
+    categoryname = models.CharField(max_length=100, blank=False)
+    description = models.TextField(max_length=1000, blank=False)
+
+    def __str__(self):
+        return str(self.categoryname)
+
+    class JSONAPIMeta:
+        resource_name = "categories"
 
 class Profile(models.Model):
     UNL = 'unl'
@@ -100,8 +110,8 @@ class Award(models.Model):
     def __str__(self):
         return str(self.title)
 
-	class JSONAPIMeta:
-		resource_name = "awards"
+    class JSONAPIMeta:
+        resource_name = "awards"
 
 class Source(models.Model):
     # Award Source choices
@@ -124,8 +134,8 @@ class Source(models.Model):
     def __str__(self):
         return str(self.name)
 
-	class JSONAPIMeta:
-		resource_name = "sources"
+    class JSONAPIMeta:
+        resource_name = "sources"
 
 class SourceSerializer(serializers.ModelSerializer):
     class Meta:
