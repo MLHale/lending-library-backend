@@ -41,7 +41,7 @@ from api.pagination import *
 from django.core import serializers
 from django.core.exceptions import ValidationError
 from api.models import Item
-from api.models import Category
+#from api.models import Category
 from django.db.models import Count
 
 import bleach
@@ -66,38 +66,6 @@ def admin_or_401(request):
     if not (request.user.is_staff or request.user.is_superuser):
         return Response({'success': False},status=status.HTTP_401_UNAUTHORIZED)
 
-class AwardViewSet(viewsets.ModelViewSet):
-    """
-    Profile Endpoint, loaded upon login typically alongside User
-    """
-    resource_name = 'awards'
-    queryset = api.Award.objects.all()
-    serializer_class = api.AwardSerializer
-    permission_classes = (AllowAny,)
-    filter_backends = (DjangoFilterBackend,)
-    filter_fields = ('id', 'title', 'description', 'awardlink','sponsororg', 'recurring','nomreq','recurinterval','opendate','nomdeadline','submdeadline','additionalinfo','source','previousapplicants','createdon')
-
-    def create(self, request):
-        admin_or_401(request)
-
-        serializer = api.AwardSerializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-        serializer.save()
-
-        return Response(serializer.data)
-
-    def update(self, request, pk=None):
-        admin_or_401(request)
-
-        serializer = api.AwardSerializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-        serializer.save()
-
-        return Response(serializer.data)
 
 class CheckoutViewSet(viewsets.ModelViewSet):
 	"""
@@ -105,14 +73,14 @@ class CheckoutViewSet(viewsets.ModelViewSet):
 	"""
 	permission_classes = (AllowAny,)
 	resource_name = 'checkouts'
-	queryset = api.Checkout.objects.all()
-	serializer_class = api.CheckoutSerializer
-	filter_fields = ('id', 'firstname', 'lastname')
+	queryset = api.Order.objects.all()
+	serializer_class = api.OrderSerializer
+	filter_fields = ('id', 'user')
 
 	def create(self, request):
 		admin_or_401(request)
 
-		serializer = api.CheckoutSerializer(data=request.data)
+		serializer = api.OrderSerializer(data=request.data)
 		if not serializer.is_valid():
 			return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -123,7 +91,7 @@ class CheckoutViewSet(viewsets.ModelViewSet):
 	def update(self, request, pk=None):
 		admin_or_401(request)
 
-		serializer = api.CheckoutSerializer(data=request.data)
+		serializer = api.OrderSerializer(data=request.data)
 		if not serializer.is_valid():
 			return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -274,7 +242,7 @@ class UserViewSet(viewsets.ModelViewSet):
 	Endpoint that allows user data to be viewed.
 	"""
 	resource_name = 'users'
-	serializer_class = api.UserSerializer
+	serializer_class = api.UserProfileSerializer
 	queryset = User.objects.all()
 	permission_classes = (IsAuthenticated,)
 
@@ -283,192 +251,6 @@ class UserViewSet(viewsets.ModelViewSet):
 		if user.is_superuser:
 			return User.objects.all()
 		return User.objects.filter(username=user.username)
-
-class ProfileViewSet(viewsets.ModelViewSet):
-	"""
-	Endpoint that allows user data to be viewed.
-	"""
-	resource_name = 'profiles'
-	serializer_class = api.ProfileSerializer
-	queryset = api.Profile.objects.all()
-	permission_classes = (IsAuthenticated,)
-
-	def get_queryset(self):
-		user = self.request.user
-		if user.is_superuser:
-			return api.Profile.objects.all()
-		return api.Profile.objects.filter(user__username=user.username)
-
-class StemfieldViewSet(viewsets.ModelViewSet):
-    """
-    Stemfield endpoint
-    """
-    resource_name = 'stemfields'
-    queryset = api.Stemfield.objects.all()
-    serializer_class = api.StemfieldSerializer
-    permission_classes = (AllowAny,)
-    filter_backends = (DjangoFilterBackend,)
-    filter_fields = ('name',)
-
-    def create(self, request):
-        admin_or_401(request)
-
-        serializer = api.StemfieldSerializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-        serializer.save()
-
-        return Response(serializer.data)
-
-    def update(self, request, pk=None):
-        admin_or_401(request)
-
-        serializer = api.StemfieldSerializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-        serializer.save()
-
-        return Response(serializer.data)
-
-
-class SourceViewSet(viewsets.ModelViewSet):
-    """
-    Source endpoint
-    """
-    resource_name = 'sources'
-    queryset = api.Source.objects.all()
-    serializer_class = api.SourceSerializer
-    permission_classes = (AllowAny,)
-    filter_backends = (DjangoFilterBackend,)
-    filter_fields = ('name',)
-
-    def create(self, request):
-        admin_or_401(request)
-
-        serializer = api.SourceSerializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-        serializer.save()
-
-        return Response(serializer.data)
-
-    def update(self, request, pk=None):
-        admin_or_401(request)
-
-        serializer = api.SourceSerializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-        serializer.save()
-
-        return Response(serializer.data)
-
-
-class AwardpurposeViewSet(viewsets.ModelViewSet):
-    """
-    Awardpurpose endpoint
-    """
-    resource_name = 'awardpurposes'
-    queryset = api.Awardpurpose.objects.all()
-    serializer_class = api.AwardpurposeSerializer
-    permission_classes = (AllowAny,)
-    filter_backends = (DjangoFilterBackend,)
-    filter_fields = ('name',)
-
-    def create(self, request):
-        admin_or_401(request)
-
-        serializer = api.AwardpurposeSerializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-        serializer.save()
-
-        return Response(serializer.data)
-
-    def update(self, request, pk=None):
-        admin_or_401(request)
-
-        serializer = api.AwardpurposeSerializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-        serializer.save()
-
-        return Response(serializer.data)
-
-class AreaofinterestViewSet(viewsets.ModelViewSet):
-    """
-    Area of interest endpoint
-    """
-    resource_name = 'areaofinterests'
-    queryset = api.Areaofinterest.objects.all()
-    serializer_class = api.AreaofinterestSerializer
-    permission_classes = (AllowAny,)
-    filter_backends = (DjangoFilterBackend,)
-    filter_fields = ('name',)
-
-    def create(self, request):
-        admin_or_401(request)
-
-        serializer = api.AreaofinterestSerializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-        serializer.save()
-
-        return Response(serializer.data)
-
-    def update(self, request, pk=None):
-        admin_or_401(request)
-
-        serializer = api.AreaofinterestSerializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-        serializer.save()
-
-        return Response(serializer.data)
-
-
-class ApplicanttypeViewSet(viewsets.ModelViewSet):
-    """
-    ApplicantType endpoint
-    """
-    resource_name = 'applicanttypes'
-    queryset = api.Applicanttype.objects.all()
-    serializer_class = api.ApplicanttypeSerializer
-    permission_classes = (AllowAny,)
-    filter_backends = (DjangoFilterBackend,)
-    filter_fields = ('name',)
-
-    def create(self, request):
-        admin_or_401(request)
-
-        serializer = api.ApplicanttypeSerializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-        serializer.save()
-
-        return Response(serializer.data)
-
-    def update(self, request, pk=None):
-        admin_or_401(request)
-
-        serializer = api.ApplicanttypeSerializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-        serializer.save()
-
-        return Response(serializer.data)
-
-
-
 
 class Register(APIView):
 	permission_classes = (AllowAny,)
