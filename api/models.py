@@ -16,71 +16,112 @@ from django.core.validators import *
 class Organization(models.Model):
 	name = models.CharField(max_length=1000, blank=False)
 	address1 = models.CharField(max_length=1000, blank=False)
-	address2 = models.CharField(max_length=1000, blank=False)
+	address2 = models.CharField(max_length=1000, blank=True)
 	city = models.CharField(max_length=100, blank=False)
 	state = models.CharField(max_length=2, blank=False)
-	zip = models.CharField(max_length=20, blank=False)
+	zipcode = models.CharField(max_length=20, blank=False)
 
+        def __str__(self):
+                return self.name
+
+ADMIN = 'ADM'
+LENDER = 'LEN'
+USER_ROLE_CHOICES = (
+	(ADMIN,'Admin'),
+	(LENDER, 'Lender'),
+)
 class UserProfile(models.Model):
 	user = models.OneToOneField(User, on_delete=models.CASCADE)
 	org = models.ForeignKey(Organization, blank=False)
+	roles = models.TextField(max_length=200, blank=True, choices=USER_ROLE_CHOICES)
+        
+        def __str__(self):
+                return self.user.username
+                        
 
-class Order(models.Model):
-	user = models.ForeignKey(User, blank=False)
-	CART = 'CART'
-	ORDERED = 'ORD'
-	INFUL = 'INFUL'
-	FUL = 'FUL'
-	SHIPPED = 'SHIP'
-	RECIEVED = 'REC'
-	RETURNED = 'RET'
-	ORDER_STATUS_CHOICES = (
-		(CART, 'In Cart'),
-		(ORDERED,'Ordered'),
-		(INFUL, 'In Fulfillment'),
-		(FUL, 'Fulfilled'),
-		(SHIPPED, 'Shipped'),
-		(RECIEVED, 'Return Recieved'),
-		(RETURNED, 'Returned'),
-	)
-	status = models.CharField(max_length=100, blank=False, choices=ORDER_STATUS_CHOICES )
-	createdon = models.DateTimeField(null = True, blank = True)
-	fulfilledon = models.DateField(null = True, blank = True)
-	returnedon = models.DateField(null = True, blank = True)
-	missingparts = models.TextField(max_length=1000, blank=True)
-
-	
-	
-# class OrderItemsRel(models.Model):
-#	order = models.ForeignKey(Order, on_delete=models.CASCADE, blank=False)
-#	item = models.ForeignKey(Item, related_names='items', blank=False)
 
 class ItemType(models.Model):
 	name = models.CharField(max_length=200, blank=False)
-	description = models.TextField(max_length=1000, blank=False)
-	imagepath = models.TextField(max_length=1000, blank=False)
+	description = models.TextField(max_length=1000, blank=True)
+	imagepath = models.TextField(max_length=200, blank=False, default="notfound.jpg")
+        
+        def __str__(self):
+                return self.name
 
+class Cart(models.Model):
+	user = models.ForeignKey(UserProfile, blank=True)   # The idea here is that every logged in user will have
+                                                     # a cart, but a user who is not logged in could also have
+                                                     # one
+        
+
+class CartItemTypeRel(models.Model):
+        cart = models.ForeignKey(UserProfile, blank=False)
+        itemype = models.ForeignKey(ItemType, blank=False)
+	quantity = models.PositiveIntegerField(blank=False, default=1)
+
+class History(models.Model):
+	user = models.ForeignKey(UserProfile, blank=False)
+	createdon = models.DateTimeField(null=True, blank=True)
+	fulfilledon = models.DateField(null=True, blank=True)
+	returnedon = models.DateField(null=True, blank=True)
+	missingparts = models.TextField(max_length=1000, blank=True)
+
+
+class HistoryItemTypeRel(models.Model):
+        history = models.ForeignKey(History, blank=False)
+        item = models.ForeignKey(ItemType, related_name='items', blank=False)
+
+
+AVAIL = 'AVA'
+CO = 'CO'
+BROKE = 'BRO'
+MISSING = 'MIS'
+NOTRET = 'NOR'
+ITEM_STATUS_CHOICES = (
+	(AVAIL, 'Available'),
+	(CO,'Checked Out'),
+	(BROKE, 'Broken'),
+	(MISSING, 'Missing'),
+	(NOTRET, 'Not Returned'),
+)
 
 class Item(models.Model):
 	type = models.ForeignKey(ItemType, blank=False)
 	barcode = models.CharField(max_length=100, blank=True)
-	AVAIL = 'AVA'
-	CO = 'CO'
-	BROKE = 'BRO'
-	MISSING = 'MIS'
-	NOTRET = 'NOR'
-	ITEM_STATUS_CHOICES = (
-		(AVAIL, 'Available'),
-		(CO,'Checked Out'),
-		(BROKE, 'Broken'),
-		(MISSING, 'MISSING'),
-		(NOTRET, 'Not Returned'),
-	)
 	status = models.CharField(max_length=100, blank=False, choices=ITEM_STATUS_CHOICES, default=AVAIL )
-	owner = models.ForeignKey(User, blank=False)
-	order = models.ManyToManyField(Order)
-	checkedoutto = models.ForeignKey(UserProfile)
+	owner = models.ForeignKey(UserProfile, blank=False)
+	checkedoutto = models.ForeignKey(UserProfile, blank=True, related_name='items')
+
+        def __str__(self):
+                return "%s--%s" % (self.type.name, self.id)
 	
+
+ORDERED = 'ORD'
+INFUL = 'INFUL'
+FUL = 'FUL'
+SHIPPED = 'SHIP'
+RECIEVED = 'REC'
+ORDER_STATUS_CHOICES = (
+	(ORDERED,'Ordered'),
+	(INFUL, 'In Fulfillment'),
+	(FUL, 'Fulfilled'),
+	(SHIPPED, 'Shipped'),
+	(RECIEVED, 'Return Recieved'),
+)
+
+class Order(models.Model):
+	user = models.ForeignKey(UserProfile, blank=False)
+	status = models.CharField(max_length=100, blank=False, choices=ORDER_STATUS_CHOICES )
+	items = models.ManyToManyField(Item, blank=False)
+	createdon = models.DateTimeField(null=True, blank=True)
+	fulfilledon = models.DateField(null=True, blank=True)
+	returnedon = models.DateField(null=True, blank=True)
+	missingparts = models.TextField(max_length=1000, blank=True)
+
+# class OrderItemsRel(models.Model):
+#      order = models.ForeignKey(Order, on_delete=models.CASCADE, blank=False)
+#      item = models.ForeignKey(Item, related_names='items', blank=False)
+
 class Package(models.Model):
 	name = models.CharField(max_length=200, blank=False)
 	description = models.TextField(max_length=1000, blank=False)
@@ -89,12 +130,18 @@ class Package(models.Model):
 		through='PackageItemRel',
 		through_fields=('package', 'itemtype'),
 	)
+
+        def __str__(self):
+                return self.name
 	
 	
 class PackageItemRel(models.Model):
 	package = models.ForeignKey(Package, blank=False)
 	itemtype = models.ForeignKey(ItemType, blank=False)
-	quantity = models.IntegerField(blank=False)
+	quantity = models.PositiveIntegerField(blank=True, default=1)
+
+        def __str__(self):
+                return "%s->%s" % (self.package.name, self.itemtype.name)
 
 
 class OrganizationSerializer(serializers.ModelSerializer):
@@ -132,171 +179,4 @@ class PackageItemRelSerializer(serializers.ModelSerializer):
         class Meta:
                 model = PackageItemRel
                 fields = ('id','package','itemtype', 'quantity')
-
-#class Source(models.Model):
-#    # Award Source choices
-#    # FED = 'federal'
-#    # LOCAL = 'local'
-#    # STATE = 'state'
-#    # PRIV = 'private_industry'
-#    # INT = 'internal'
-#    # SOURCE_OTHER = 'other'
-#    # AWARD_SOURCE_CHOICES = (
-#    #     (FED, 'Federal Government'),
-#    #     (STATE,'State Government'),
-#    #     (LOCAL, 'Local Government'),
-#    #     (INT, 'Internal'),
-#    #     (PRIV, 'Private Industry'),
-#    #     (SOURCE_OTHER, 'Other')
-#    # )
-#    name = models.CharField(max_length=100, blank=False, unique=True) #choices=AWARD_SOURCE_CHOICES, default=SOURCE_OTHER,
-#
-#    def __str__(self):
-#        return str(self.name)
-#
-#    class JSONAPIMeta:
-#        resource_name = "sources"
-#
-#class SourceSerializer(serializers.ModelSerializer):
-#    class Meta:
-#        model = Source
-#        fields = ('id','name')
-#
-#
-#class Applicanttype(models.Model):
-#    name = models.CharField(max_length=1000, blank=False, unique=True)
-#
-#    def __str__(self):
-#        return str(self.name)
-#
-#	class JSONAPIMeta:
-#		resource_name = "applicanttypes"
-#
-#class ApplicanttypeSerializer(serializers.ModelSerializer):
-#    class Meta:
-#        model = Applicanttype
-#        fields = ('id','name')
-#
-#
-#class Stemfield(models.Model):
-#    name = models.CharField(max_length=1000, blank=False, unique=True)
-#
-#    def __str__(self):
-#        return str(self.name)
-#
-#	class JSONAPIMeta:
-#		resource_name = "stemfields"
-#
-#class StemfieldSerializer(serializers.ModelSerializer):
-#    class Meta:
-#        model = Stemfield
-#        fields = ('id','name')
-#
-#
-#class Awardpurpose(models.Model):
-#    name = models.CharField(max_length=1000, blank=False, unique=True)
-#
-#    def __str__(self):
-#        return str(self.name)
-#
-#	class JSONAPIMeta:
-#		resource_name = "awardpurposes"
-#
-#class AwardpurposeSerializer(serializers.ModelSerializer):
-#    class Meta:
-#        model = Awardpurpose
-#        fields = ('id','name')
-#
-#
-#class Areaofinterest(models.Model):
-#    name = models.CharField(max_length=1000, blank=False)
-#
-#    def __str__(self):
-#        return str(self.name)
-#
-#	class JSONAPIMeta:
-#		resource_name = "areaofinterests"
-#
-#class AreaofinterestSerializer(serializers.ModelSerializer):
-#    class Meta:
-#        model = Areaofinterest
-#        fields = ('id','name')
-#
-#
-#class UserSerializer(serializers.ModelSerializer):
-#    lastname = serializers.CharField(source='last_name')
-#    firstname = serializers.CharField(source='first_name')
-#    issuperuser = serializers.CharField(source='is_superuser')
-#    class Meta:
-#		resource_name = 'users'
-#		model = User
-#		fields = ('id', 'username', 'lastname', 'firstname', 'email', 'issuperuser')
-#
-#class InternalItemSerializer(serializers.ModelSerializer):
-#    #owner = UserSerializer(read_only = True)
-#    #checkedoutto = CheckoutSerializer(read_only = True)
-#    included_serializers = {'owner': UserSerializer,}
-#
-#    class Meta:
-#        model = Item
-#        fields = ('id', 'partname', 'owner', 'description')
-#
-#    class JSONAPIMeta:
-#        included_resources = ['owner']
-#
-#
-## class CheckoutSerializer(serializers.ModelSerializer):
-##    items = InternalItemSerializer(read_only = True, many = True)
-##    #included_serializers = {'items', InternalItemSerializer}
-#
-##    class Meta:
-##        model = Checkout
-##        fields = ('id', 'items', 'firstname', 'lastname', 'address', 'phonenumber', 'numberofstudents', 'createdon', 'fulfilledon', 'returnedon', 'missingparts' )
-#
-##    class JSONAPIMeta:
-##        included_resources = ['items']
-#
-#class ItemSerializer(serializers.ModelSerializer):
-#    #owner = UserSerializer(read_only = True)
-#    #checkedoutto = CheckoutSerializer(read_only = True)
-#    included_serializers = {'owner': UserSerializer, 'checkedoutto': CheckoutSerializer,}
-#
-#    class Meta:
-#        model = Item
-#        #fields = ('id', 'partname', 'owner', 'description', 'checkedoutto')
-#        fields = '__all__'
-#
-#    class JSONAPIMeta:
-#        included_resources = ['owner', 'checkedoutto']
-#
-#class ProfileSerializer(serializers.ModelSerializer):
-#    included_serializers = {
-#        'user': UserSerializer,
-#        'areasofinterest': AreaofinterestSerializer
-#    }
-#
-#    class Meta:
-#        model = Profile
-#        fields = ('id', 'org', 'college', 'dept', 'otherdetails','user', 'areasofinterest')
-#
-#
-#    class JSONAPIMeta:
-#		included_resources = ['user']
-#
-#class AwardSerializer(serializers.ModelSerializer):
-#    included_serializers = {
-#        'createdby': ProfileSerializer,
-#        'applicanttypes': ApplicanttypeSerializer,
-#        'awardpurposes': AwardpurposeSerializer,
-#        'stemfields': StemfieldSerializer,
-#        'source': SourceSerializer
-#    }
-#
-#    class Meta:
-#        model = Award
-#        fields = ('id', 'title', 'description', 'awardlink','sponsororg', 'recurring','nomreq','recurinterval','opendate','nomdeadline','submdeadline','additionalinfo','source','previousapplicants','createdon','createdby','applicanttypes','awardpurposes','stemfields')
-#
-#
-#    class JSONAPIMeta:
-#		included_resources = ['createdby','applicanttypes', 'awardpurposes','stemfields','source']
 
