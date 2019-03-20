@@ -56,7 +56,7 @@ class Cart(models.Model):
 
 class CartItemTypeRel(models.Model):
         cart = models.ForeignKey(UserProfile, blank=False)
-        itemype = models.ForeignKey(ItemType, blank=False)
+        itemtype = models.ForeignKey(ItemType, blank=False)
 	quantity = models.PositiveIntegerField(blank=False, default=1)
 
 class History(models.Model):
