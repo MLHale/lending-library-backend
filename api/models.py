@@ -77,7 +77,7 @@ class Item(models.Model):
 	barcode = models.CharField(max_length=100, blank=True)
 	status = models.CharField(max_length=100, blank=False, choices=ITEM_STATUS_CHOICES, default=AVAIL )
 	owner = models.ForeignKey(UserProfile, blank=False)
-	checkedoutto = models.ForeignKey(UserProfile, blank=True, related_name='items')
+	checkedoutto = models.ForeignKey(UserProfile, null=True, related_name='items')
 
         def __str__(self):
                 return "%s--%s" % (self.type.name, self.id)
