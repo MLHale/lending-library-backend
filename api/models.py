@@ -59,19 +59,6 @@ class CartItemTypeRel(models.Model):
         itemtype = models.ForeignKey(ItemType, blank=False)
 	quantity = models.PositiveIntegerField(blank=False, default=1)
 
-class History(models.Model):
-	user = models.ForeignKey(UserProfile, blank=False)
-	createdon = models.DateTimeField(null=True, blank=True)
-	fulfilledon = models.DateField(null=True, blank=True)
-	returnedon = models.DateField(null=True, blank=True)
-	missingparts = models.TextField(max_length=1000, blank=True)
-
-
-class HistoryItemTypeRel(models.Model):
-        history = models.ForeignKey(History, blank=False)
-        item = models.ForeignKey(ItemType, related_name='items', blank=False)
-
-
 AVAIL = 'AVA'
 CO = 'CO'
 BROKE = 'BRO'
@@ -94,7 +81,20 @@ class Item(models.Model):
 
         def __str__(self):
                 return "%s--%s" % (self.type.name, self.id)
-	
+
+class History(models.Model):
+	user = models.ForeignKey(UserProfile, blank=False)
+	createdon = models.DateTimeField(null=True, blank=True)
+	fulfilledon = models.DateField(null=True, blank=True)
+	returnedon = models.DateField(null=True, blank=True)
+	missingparts = models.TextField(max_length=1000, blank=True)
+
+
+class HistoryItemRel(models.Model):
+        history = models.ForeignKey(History, blank=False)
+        item = models.ForeignKey(Item, related_name='items', blank=False)
+
+
 
 ORDERED = 'ORD'
 INFUL = 'INFUL'
@@ -127,7 +127,7 @@ class Package(models.Model):
 	description = models.TextField(max_length=1000, blank=False)
 	items = models.ManyToManyField( 
 		ItemType,
-		through='PackageItemRel',
+		through='PackageItemTypeRel',
 		through_fields=('package', 'itemtype'),
 	)
 
@@ -135,7 +135,7 @@ class Package(models.Model):
                 return self.name
 	
 	
-class PackageItemRel(models.Model):
+class PackageItemTypeRel(models.Model):
 	package = models.ForeignKey(Package, blank=False)
 	itemtype = models.ForeignKey(ItemType, blank=False)
 	quantity = models.PositiveIntegerField(blank=True, default=1)
@@ -175,8 +175,8 @@ class PackageSerializer(serializers.ModelSerializer):
                 model = Package
                 fields = ('id','name','description', 'items')
 
-class PackageItemRelSerializer(serializers.ModelSerializer):
+class PackageItemTypeRelSerializer(serializers.ModelSerializer):
         class Meta:
-                model = PackageItemRel
+                model = PackageItemTypeRel
                 fields = ('id','package','itemtype', 'quantity')
 
