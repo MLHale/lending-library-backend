@@ -49,19 +49,23 @@ class ItemType(models.Model):
 		return self.name
 
 class Cart(models.Model):
-	user = models.ForeignKey(UserProfile, blank=True)   # The idea here is that every logged in user will have
-                                                     # a cart, but a user who is not logged in could also have
-                                                     # one
+	user = models.ForeignKey(UserProfile, blank=False)
+	items = models.ManyToManyField(
+		ItemType,
+		through='CartItemTypeRel',
+		through_fields=('cart', 'itemtype'),
+
 	def __str__(self):
-		return "Cart: %s" % self.user.user
+		return "Cart: %s" % self.user
 
 class CartItemTypeRel(models.Model):
-	cart = models.ForeignKey(UserProfile, blank=False)
+	cart = models.ForeignKey(Cart, blank=False)
 	itemtype = models.ForeignKey(ItemType, blank=False)
-	quantity = models.PositiveIntegerField(blank=False, default=1)
+	quantity = models.PositiveIntegerField(blank=True, default=1)
 
 	def __str__(self):
-		return "Cart: %s -> ItemType: %s" % (self.cart, self.itemtype)
+		return "Cart: %s -> ItemType: %s" % (self.cart.id, self.itemtype)
+
 
 AVAIL = 'AVA'
 CO = 'CO'
@@ -84,10 +88,11 @@ class Item(models.Model):
 	checkedoutto = models.ForeignKey(UserProfile, null=True, related_name='items')
 
 	def __str__(self):
-		return "Item: %s ID: %s" % (self.type.name, self.id)
+		return "Item: %s ID: %s" % (self.type, self.id)
 
 class History(models.Model):
 	user = models.ForeignKey(UserProfile, blank=False)
+	items = models.ManyToManyField(Item, blank=False)
 	createdon = models.DateTimeField(null=True, blank=True)
 	fulfilledon = models.DateField(null=True, blank=True)
 	returnedon = models.DateField(null=True, blank=True)
@@ -97,12 +102,12 @@ class History(models.Model):
 		return "History ID:%s User: %s Returned: %s" % (self.id, self.user, self.returnedon)
 
 
-class HistoryItemRel(models.Model):
-	history = models.ForeignKey(History, blank=False)
-	item = models.ForeignKey(Item, related_name='items', blank=False)
-
-	def __str__(self):
-		return "History: %s -> Item: %s" % (self.history, self.item)
+#class HistoryItemRel(models.Model):
+#	history = models.ForeignKey(History, blank=False)
+#	item = models.ForeignKey(Item, related_name='items', blank=False)
+#
+#	def __str__(self):
+#		return "History: %s -> Item: %s" % (self.history, self.item)
 
 ORDERED = 'ORD'
 INFUL = 'INFUL'
@@ -152,7 +157,7 @@ class PackageItemTypeRel(models.Model):
 	quantity = models.PositiveIntegerField(blank=True, default=1)
 
 	def __str__(self):
-		return "Package: %s -> ItemType: %s" % (self.package.name, self.itemtype.name)
+		return "Package: %s -> ItemType: %s" % (self.package, self.itemtype)
 
 
 class OrganizationSerializer(serializers.ModelSerializer):
