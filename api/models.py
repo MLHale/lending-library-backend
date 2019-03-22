@@ -82,7 +82,7 @@ ITEM_STATUS_CHOICES = (
 )
 
 class Item(models.Model):
-	type = models.ForeignKey(ItemType, blank=False)
+	type = models.ForeignKey(ItemType, blank=False, default=1)
 	barcode = models.CharField(max_length=100, blank=True)
 	status = models.CharField(max_length=100, blank=False, choices=ITEM_STATUS_CHOICES, default=AVAIL )
 	owner = models.ForeignKey(UserProfile, blank=False)
