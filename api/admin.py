@@ -26,7 +26,6 @@ admin.site.register(PackageItemTypeRel)
 admin.site.register(Cart)
 admin.site.register(CartItemTypeRel)
 admin.site.register(History)
-admin.site.register(HistoryItemRel)
 
 #admin.site.register(Award)
 #admin.site.register(Stemfield)

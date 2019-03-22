@@ -54,6 +54,7 @@ class Cart(models.Model):
 		ItemType,
 		through='CartItemTypeRel',
 		through_fields=('cart', 'itemtype'),
+	)
 
 	def __str__(self):
 		return "Cart: %s" % self.user
