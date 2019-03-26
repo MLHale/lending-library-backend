@@ -13,6 +13,10 @@ from rest_framework_json_api import serializers
 from django.core.validators import *
 
 class Organization(models.Model):
+	"""
+	This model is connected to a UserProfile to define Organization and address
+	information.
+	"""
 	name = models.CharField(max_length=1000, blank=False)
 	address1 = models.CharField(max_length=1000, blank=False)
 	address2 = models.CharField(max_length=1000, blank=True)
@@ -30,6 +34,10 @@ USER_ROLE_CHOICES = (
 	(LENDER, 'Lender'),
 )
 class UserProfile(models.Model):
+	"""
+	This model extends django.contib.auth's User model. It allows a User to have
+	an Organization and optional roles.
+	"""
 	user = models.OneToOneField(User, on_delete=models.CASCADE)
 	org = models.ForeignKey(Organization, blank=False)
 	roles = models.TextField(
@@ -42,6 +50,10 @@ class UserProfile(models.Model):
 		return self.user.username
 
 class ItemType(models.Model):
+	"""
+	This model classifies an instance of the Item model. It provides a name,
+	description, and a path to an image.
+	"""
 	name = models.CharField(max_length=200, blank=False)
 	description = models.TextField(max_length=1000, blank=True)
 	imagepath = models.TextField(
@@ -54,6 +66,10 @@ class ItemType(models.Model):
 		return self.name
 
 class Cart(models.Model):
+	"""
+	This model allows a user to have a Cart. It can contain items that the User
+	selects from the Lending Library.
+	"""
 	user = models.ForeignKey(UserProfile, blank=False)
 	items = models.ManyToManyField(
 		ItemType,
@@ -65,6 +81,10 @@ class Cart(models.Model):
 		return "Cart: %s" % self.user
 
 class CartItemTypeRel(models.Model):
+	"""
+	This model allows a Cart to contain different ItemTypes of varying
+	quantities.
+	"""
 	cart = models.ForeignKey(Cart, blank=False)
 	itemtype = models.ForeignKey(ItemType, blank=False)
 	quantity = models.PositiveIntegerField(blank=True, default=1)
@@ -86,6 +106,10 @@ ITEM_STATUS_CHOICES = (
 )
 
 class Item(models.Model):
+	"""
+	This model defines an instance of a real-world Item placed within the
+	database.
+	"""
 	type = models.ForeignKey(ItemType, blank=False, default=1)
 	barcode = models.CharField(max_length=100, blank=True)
 	status = models.CharField(
@@ -105,6 +129,10 @@ class Item(models.Model):
 		return "Item: %s ID: %s" % (self.type, self.id)
 
 class History(models.Model):
+	"""
+	A completed Order model will be migrated to a History model. This is done to
+	maintain a manageable Order table size for faster queries.
+	"""
 	user = models.ForeignKey(UserProfile, blank=False)
 	items = models.ManyToManyField(Item, blank=False)
 	createdon = models.DateTimeField(null=True, blank=True)
@@ -140,6 +168,10 @@ ORDER_STATUS_CHOICES = (
 )
 
 class Order(models.Model):
+	"""
+	This model tracks the items that a User has borrowed until the items are
+	returned.
+	"""
 	user = models.ForeignKey(UserProfile, blank=False)
 	status = models.CharField(
 		max_length=100,
@@ -160,6 +192,10 @@ class Order(models.Model):
 #      item = models.ForeignKey(Item, related_names='items', blank=False)
 
 class Package(models.Model):
+	"""
+	This model allows Users to add a set of Items, defined by this model, to
+	their Cart.
+	"""
 	name = models.CharField(max_length=200, blank=False)
 	description = models.TextField(max_length=1000, blank=False)
 	items = models.ManyToManyField(
@@ -172,6 +208,10 @@ class Package(models.Model):
 		return self.name
 
 class PackageItemTypeRel(models.Model):
+	"""
+	This model enables the Package model to contain various quantities of
+	multiple ItemTypes.
+	"""
 	package = models.ForeignKey(Package, blank=False)
 	itemtype = models.ForeignKey(ItemType, blank=False)
 	quantity = models.PositiveIntegerField(blank=True, default=1)
@@ -182,6 +222,9 @@ class PackageItemTypeRel(models.Model):
 # Begin Serializers
 
 class OrganizationSerializer(serializers.ModelSerializer):
+	"""
+	Allows for serialization and deserialization of the Organization model.
+	"""
 	class Meta:
 		model = Organization
 		fields = (
@@ -197,6 +240,9 @@ class OrganizationSerializer(serializers.ModelSerializer):
 # This serializer exceeds what is provided by the model itself
 # Can a serializer include fields from a parent model?
 class UserProfileSerializer(serializers.ModelSerializer):
+	"""
+	Allows for serialization and deserialization of the UserProfile model.
+	"""
 	class Meta:
 		model = UserProfile
 		fields = (
@@ -215,21 +261,33 @@ class UserProfileSerializer(serializers.ModelSerializer):
 			)
 
 class ItemTypeSerializer(serializers.ModelSerializer):
+	"""
+	Allows for serialization and deserialization of the ItemType model.
+	"""
 	class Meta:
 		model = ItemType
 		fields = ('id', 'name', 'description', 'imagepath')
 
 class CartSerializer(serializers.ModelSerializer):
+	"""
+	Allows for serialization and deserialization of the Cart model.
+	"""
 	class Meta:
 		model = Cart
 		fields = ('id', 'user', 'items')
 
 class CartItemTypeRelSerializer(serializers.ModelSerializer):
+	"""
+	Allows for serialization and deserialization of the CartItemTypeRel model.
+	"""
 	class Meta:
 		model = CartItemTypeRel
 		fields = ('id', 'cart', 'itemtype', 'quantity')
 
 class ItemSerializer(serializers.ModelSerializer):
+	"""
+	Allows for serialization and deserialization of the Item model.
+	"""
 	class Meta:
 		model = Item
 		fields = (
@@ -243,6 +301,9 @@ class ItemSerializer(serializers.ModelSerializer):
 		)
 
 class HistorySerializer(serializers.ModelSerializer):
+	"""
+	Allows for serialization and deserialization of the History model.
+	"""
 	class Meta:
 		model = History
 		fields = (
@@ -256,6 +317,9 @@ class HistorySerializer(serializers.ModelSerializer):
 		)
 
 class OrderSerializer(serializers.ModelSerializer):
+	"""
+	Allows for serialization and deserialization of the Order model.
+	"""
 	class Meta:
 		model = Order
 		fields = (
@@ -269,11 +333,18 @@ class OrderSerializer(serializers.ModelSerializer):
 		)
 
 class PackageSerializer(serializers.ModelSerializer):
+	"""
+	Allows for serialization and deserialization of the Package model.
+	"""
 	class Meta:
 		model = Package
 		fields = ('id', 'name', 'description', 'items')
 
 class PackageItemTypeRelSerializer(serializers.ModelSerializer):
+	"""
+	Allows for serialization and deserialization of the PackageItemTypeRel
+	model.
+	"""
 	class Meta:
 		model = PackageItemTypeRel
 		fields = ('id', 'package', 'itemtype', 'quantity')
