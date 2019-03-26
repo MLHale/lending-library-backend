@@ -6,7 +6,6 @@
 # @Last modified time: 2018-03-05T14:15:06-06:00
 # @Copyright: Copyright (C) 2018 Matthew L. Hale
 
-
 from __future__ import unicode_literals
 from django.db import models
 from django.contrib.auth.models import User
@@ -33,17 +32,23 @@ USER_ROLE_CHOICES = (
 class UserProfile(models.Model):
 	user = models.OneToOneField(User, on_delete=models.CASCADE)
 	org = models.ForeignKey(Organization, blank=False)
-	roles = models.TextField(max_length=200, blank=True, choices=USER_ROLE_CHOICES)
+	roles = models.TextField(
+		max_length=200,
+		blank=True,
+		choices=USER_ROLE_CHOICES
+		)
 
 	def __str__(self):
 		return self.user.username
 
-
-
 class ItemType(models.Model):
 	name = models.CharField(max_length=200, blank=False)
 	description = models.TextField(max_length=1000, blank=True)
-	imagepath = models.TextField(max_length=200, blank=False, default="notfound.jpg")
+	imagepath = models.TextField(
+		max_length=200,
+		blank=False,
+		default="notfound.jpg"
+		)
 
 	def __str__(self):
 		return self.name
@@ -65,8 +70,7 @@ class CartItemTypeRel(models.Model):
 	quantity = models.PositiveIntegerField(blank=True, default=1)
 
 	def __str__(self):
-		return "Cart: %s -> ItemType: %s" % (self.cart.id, self.itemtype)
-
+		return "%s -> ItemType: %s" % (self.cart, self.itemtype)
 
 AVAIL = 'AVA'
 CO = 'CO'
@@ -84,9 +88,18 @@ ITEM_STATUS_CHOICES = (
 class Item(models.Model):
 	type = models.ForeignKey(ItemType, blank=False, default=1)
 	barcode = models.CharField(max_length=100, blank=True)
-	status = models.CharField(max_length=100, blank=False, choices=ITEM_STATUS_CHOICES, default=AVAIL )
+	status = models.CharField(
+		max_length=100,
+		blank=False,
+		choices=ITEM_STATUS_CHOICES,
+		default=AVAIL
+		)
 	owner = models.ForeignKey(UserProfile, blank=False)
-	checkedoutto = models.ForeignKey(UserProfile, null=True, related_name='items')
+	checkedoutto = models.ForeignKey(
+		UserProfile,
+		null=True,
+		related_name='items'
+		)
 
 	def __str__(self):
 		return "Item: %s ID: %s" % (self.type, self.id)
@@ -100,8 +113,11 @@ class History(models.Model):
 	missingparts = models.TextField(max_length=1000, blank=True)
 
 	def __str__(self):
-		return "History ID:%s User: %s Returned: %s" % (self.id, self.user, self.returnedon)
-
+		return "History ID: %s User: %s Returned: %s" % (
+			self.id,
+			self.user,
+			self.returnedon
+			)
 
 #class HistoryItemRel(models.Model):
 #	history = models.ForeignKey(History, blank=False)
@@ -125,7 +141,11 @@ ORDER_STATUS_CHOICES = (
 
 class Order(models.Model):
 	user = models.ForeignKey(UserProfile, blank=False)
-	status = models.CharField(max_length=100, blank=False, choices=ORDER_STATUS_CHOICES )
+	status = models.CharField(
+		max_length=100,
+		blank=False,
+		choices=ORDER_STATUS_CHOICES
+		)
 	items = models.ManyToManyField(Item, blank=False)
 	createdon = models.DateTimeField(null=True, blank=True)
 	fulfilledon = models.DateField(null=True, blank=True)
@@ -133,7 +153,7 @@ class Order(models.Model):
 	missingparts = models.TextField(max_length=1000, blank=True)
 
 	def __str__(self):
-		return "Order ID:%s" % self.id
+		return "Order ID: %s" % self.id
 
 # class OrderItemsRel(models.Model):
 #      order = models.ForeignKey(Order, on_delete=models.CASCADE, blank=False)
@@ -151,7 +171,6 @@ class Package(models.Model):
 	def __str__(self):
 		return self.name
 
-
 class PackageItemTypeRel(models.Model):
 	package = models.ForeignKey(Package, blank=False)
 	itemtype = models.ForeignKey(ItemType, blank=False)
@@ -160,39 +179,101 @@ class PackageItemTypeRel(models.Model):
 	def __str__(self):
 		return "Package: %s -> ItemType: %s" % (self.package, self.itemtype)
 
+# Begin Serializers
 
 class OrganizationSerializer(serializers.ModelSerializer):
-        class Meta:
-                model = Organization
-                fields = ('id','name','address1','address2','city','state','zip')
+	class Meta:
+		model = Organization
+		fields = (
+			'id',
+			'name',
+			'address1',
+			'address2',
+			'city',
+			'state',
+			'zipcode'
+			)
 
+# This serializer exceeds what is provided by the model itself
+# Can a serializer include fields from a parent model?
 class UserProfileSerializer(serializers.ModelSerializer):
-        class Meta:
-                model = UserProfile
-                fields = ('id','username','first_name','last_name','email','password','user_permissions', 'is_superuser','is_active', 'last_login',
-'date_joined', 'org')
-
-class OrderSerializer(serializers.ModelSerializer):
-        class Meta:
-                model = Order
-                fields = ('id','user','status','createdon','fulfilledon','returndon','missingpars')
+	class Meta:
+		model = UserProfile
+		fields = (
+			'id',
+			'username',
+			'first_name',
+			'last_name',
+			'email',
+			'password',
+			'user_permissions',
+			'is_superuser',
+			'is_active',
+			'last_login',
+			'date_joined',
+			'org'
+			)
 
 class ItemTypeSerializer(serializers.ModelSerializer):
-        class Meta:
-                model = ItemType
-                fields = ('id','name','description')
+	class Meta:
+		model = ItemType
+		fields = ('id', 'name', 'description', 'imagepath')
+
+class CartSerializer(serializers.ModelSerializer):
+	class Meta:
+		model = Cart
+		fields = ('id', 'user', 'items')
+
+class CartItemTypeRelSerializer(serializers.ModelSerializer):
+	class Meta:
+		model = CartItemTypeRel
+		fields = ('id', 'cart', 'itemtype', 'quantity')
 
 class ItemSerializer(serializers.ModelSerializer):
-        class Meta:
-                model = Item
-                fields = ('id','type','barcode', 'status', 'owner', 'order', 'checkedoutto')
+	class Meta:
+		model = Item
+		fields = (
+		'id',
+		'type',
+		'barcode',
+		'status',
+		'owner',
+		'order',
+		'checkedoutto'
+		)
+
+class HistorySerializer(serializers.ModelSerializer):
+	class Meta:
+		model = History
+		fields = (
+		'id',
+		'user',
+		'items',
+		'createdon',
+		'fulfilledon',
+		'returnedon',
+		'missingparts'
+		)
+
+class OrderSerializer(serializers.ModelSerializer):
+	class Meta:
+		model = Order
+		fields = (
+		'id',
+		'user',
+		'status',
+		'createdon',
+		'fulfilledon',
+		'returndon',
+		'missingparts'
+		)
 
 class PackageSerializer(serializers.ModelSerializer):
-        class Meta:
-                model = Package
-                fields = ('id','name','description', 'items')
+	class Meta:
+		model = Package
+		fields = ('id', 'name', 'description', 'items')
 
 class PackageItemTypeRelSerializer(serializers.ModelSerializer):
-        class Meta:
-                model = PackageItemTypeRel
-                fields = ('id','package','itemtype', 'quantity')
+	class Meta:
+		model = PackageItemTypeRel
+		fields = ('id', 'package', 'itemtype', 'quantity')
