@@ -147,13 +147,6 @@ class History(models.Model):
 			self.returnedon
 			)
 
-#class HistoryItemRel(models.Model):
-#	history = models.ForeignKey(History, blank=False)
-#	item = models.ForeignKey(Item, related_name='items', blank=False)
-#
-#	def __str__(self):
-#		return "History: %s -> Item: %s" % (self.history, self.item)
-
 ORDERED = 'ORD'
 INFUL = 'INFUL'
 FUL = 'FUL'
@@ -186,10 +179,6 @@ class Order(models.Model):
 
 	def __str__(self):
 		return "Order ID: %s" % self.id
-
-# class OrderItemsRel(models.Model):
-#      order = models.ForeignKey(Order, on_delete=models.CASCADE, blank=False)
-#      item = models.ForeignKey(Item, related_names='items', blank=False)
 
 class Package(models.Model):
 	"""
@@ -239,6 +228,7 @@ class OrganizationSerializer(serializers.ModelSerializer):
 
 # This serializer exceeds what is provided by the model itself
 # Can a serializer include fields from a parent model?
+# (UserProfile essentially extends django.contrib.auth's User model)
 class UserProfileSerializer(serializers.ModelSerializer):
 	"""
 	Allows for serialization and deserialization of the UserProfile model.
