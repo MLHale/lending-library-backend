@@ -1,9 +1,18 @@
-# WiSTEM Backend API
-Details go here
+# Lending Library Backend API
+This Backend API is written using the Django framework. It allows for the following functionality:
+* The UserProfile model allows storing of user information and identifies special user roles if applicable.
+* The Organization model stores address information related to a user so that shipping services can be provided.
+* The Item model allows the physical equipment to be mapped to specific records in the database.
+* The ItemType model describes an item and provides an image path.
+* The Cart model allows the user to place items into a cart before placing an order.
+* The Package model allows users to place an order for a predefined group of items so that they do not have to be added to the cart individually.
+* The Order model allows tracking of the order status along with the items associated with the order.
+* The History model can be used to migrate completed orders into a separate data set so that active orders can be queried quickly.
+
 
 # License
-The WiSTEM Award Management App is an search-oriented award management app for the UNO Women in stem program.
-Copyright (C) 2017  Matt Hale and CYBR8470 Class. 
+The Lending Library App is a search-oriented library management app for maintaining the UNO lending library.
+Copyright (C) 2019 Matt Hale and CYBR 4580/8950 Class.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

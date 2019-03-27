@@ -121,6 +121,7 @@ class Item(models.Model):
 	owner = models.ForeignKey(UserProfile, blank=False)
 	checkedoutto = models.ForeignKey(
 		UserProfile,
+		blank=True,
 		null=True,
 		related_name='items'
 		)
