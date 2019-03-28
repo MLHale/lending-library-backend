@@ -3,7 +3,7 @@ Details go here
 
 # License
 The WiSTEM Award Management App is an search-oriented award management app for the UNO Women in stem program.
-Copyright (C) 2017  Matt Hale and CYBR8470 Class. 
+Copyright (C) 2017  Matt Hale. 
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

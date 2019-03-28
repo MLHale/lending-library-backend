@@ -180,3 +180,7 @@ EMAIL_HOST_PASSWORD = ''
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+# For file upload
+MEDIA_URL = '../static/uploads/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'static/uploads/')

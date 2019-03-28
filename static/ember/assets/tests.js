@@ -4682,6 +4682,35 @@ define('lend-database/tests/integration/components/cart-view-test', ['qunit', 'e
     });
   });
 });
+define('lend-database/tests/integration/components/list-pagination-test', ['qunit', 'ember-qunit', '@ember/test-helpers'], function (_qunit, _emberQunit, _testHelpers) {
+  'use strict';
+
+  (0, _qunit.module)('Integration | Component | list-pagination', function (hooks) {
+    (0, _emberQunit.setupRenderingTest)(hooks);
+
+    (0, _qunit.test)('it renders', async function (assert) {
+      // Set any properties with this.set('myProperty', 'value');
+      // Handle any actions with this.set('myAction', function(val) { ... });
+
+      await (0, _testHelpers.render)(Ember.HTMLBars.template({
+        "id": "e5FwRb1J",
+        "block": "{\"symbols\":[],\"statements\":[[1,[21,\"list-pagination\"],false]],\"hasEval\":false}",
+        "meta": {}
+      }));
+
+      assert.equal(this.element.textContent.trim(), '');
+
+      // Template block usage:
+      await (0, _testHelpers.render)(Ember.HTMLBars.template({
+        "id": "f5Uu0Go3",
+        "block": "{\"symbols\":[],\"statements\":[[0,\"\\n\"],[4,\"list-pagination\",null,null,{\"statements\":[[0,\"        template block text\\n\"]],\"parameters\":[]},null],[0,\"    \"]],\"hasEval\":false}",
+        "meta": {}
+      }));
+
+      assert.equal(this.element.textContent.trim(), 'template block text');
+    });
+  });
+});
 define('lend-database/tests/integration/components/login-page-test', ['qunit', 'ember-qunit', '@ember/test-helpers'], function (_qunit, _emberQunit, _testHelpers) {
   'use strict';
 
@@ -4758,6 +4787,11 @@ define('lend-database/tests/lint/app.lint-test', [], function () {
   QUnit.test('components/cart-view.js', function (assert) {
     assert.expect(1);
     assert.ok(true, 'components/cart-view.js should pass ESLint\n\n');
+  });
+
+  QUnit.test('components/list-pagination.js', function (assert) {
+    assert.expect(1);
+    assert.ok(true, 'components/list-pagination.js should pass ESLint\n\n');
   });
 
   QUnit.test('components/login-page.js', function (assert) {
@@ -4915,11 +4949,6 @@ define('lend-database/tests/lint/app.lint-test', [], function () {
     assert.ok(true, 'routes/login.js should pass ESLint\n\n');
   });
 
-  QUnit.test('routes/projects.js', function (assert) {
-    assert.expect(1);
-    assert.ok(true, 'routes/projects.js should pass ESLint\n\n');
-  });
-
   QUnit.test('routes/register.js', function (assert) {
     assert.expect(1);
     assert.ok(true, 'routes/register.js should pass ESLint\n\n');
@@ -4975,6 +5004,11 @@ define('lend-database/tests/lint/templates.template.lint-test', [], function () 
     assert.ok(true, 'lend-database/templates/components/cart-view.hbs should pass TemplateLint.\n\n');
   });
 
+  QUnit.test('lend-database/templates/components/list-pagination.hbs', function (assert) {
+    assert.expect(1);
+    assert.ok(false, 'lend-database/templates/components/list-pagination.hbs should pass TemplateLint.\n\nlend-database/templates/components/list-pagination.hbs\n  2:24  error  elements cannot have inline styles  no-inline-styles\n  3:73  error  elements cannot have inline styles  no-inline-styles\n');
+  });
+
   QUnit.test('lend-database/templates/components/login-page.hbs', function (assert) {
     assert.expect(1);
     assert.ok(true, 'lend-database/templates/components/login-page.hbs should pass TemplateLint.\n\n');
@@ -5000,11 +5034,6 @@ define('lend-database/tests/lint/templates.template.lint-test', [], function () 
     assert.ok(true, 'lend-database/templates/login.hbs should pass TemplateLint.\n\n');
   });
 
-  QUnit.test('lend-database/templates/projects.hbs', function (assert) {
-    assert.expect(1);
-    assert.ok(true, 'lend-database/templates/projects.hbs should pass TemplateLint.\n\n');
-  });
-
   QUnit.test('lend-database/templates/register.hbs', function (assert) {
     assert.expect(1);
     assert.ok(true, 'lend-database/templates/register.hbs should pass TemplateLint.\n\n');
@@ -5023,6 +5052,11 @@ define('lend-database/tests/lint/tests.lint-test', [], function () {
   QUnit.test('integration/components/cart-view-test.js', function (assert) {
     assert.expect(1);
     assert.ok(true, 'integration/components/cart-view-test.js should pass ESLint\n\n');
+  });
+
+  QUnit.test('integration/components/list-pagination-test.js', function (assert) {
+    assert.expect(1);
+    assert.ok(true, 'integration/components/list-pagination-test.js should pass ESLint\n\n');
   });
 
   QUnit.test('integration/components/login-page-test.js', function (assert) {
@@ -5173,11 +5207,6 @@ define('lend-database/tests/lint/tests.lint-test', [], function () {
   QUnit.test('unit/routes/login-test.js', function (assert) {
     assert.expect(1);
     assert.ok(true, 'unit/routes/login-test.js should pass ESLint\n\n');
-  });
-
-  QUnit.test('unit/routes/projects-test.js', function (assert) {
-    assert.expect(1);
-    assert.ok(true, 'unit/routes/projects-test.js should pass ESLint\n\n');
   });
 
   QUnit.test('unit/routes/register-test.js', function (assert) {
@@ -5622,18 +5651,6 @@ define('lend-database/tests/unit/routes/login-test', ['qunit', 'ember-qunit'], f
 
     (0, _qunit.test)('it exists', function (assert) {
       let route = this.owner.lookup('route:login');
-      assert.ok(route);
-    });
-  });
-});
-define('lend-database/tests/unit/routes/projects-test', ['qunit', 'ember-qunit'], function (_qunit, _emberQunit) {
-  'use strict';
-
-  (0, _qunit.module)('Unit | Route | projects', function (hooks) {
-    (0, _emberQunit.setupTest)(hooks);
-
-    (0, _qunit.test)('it exists', function (assert) {
-      let route = this.owner.lookup('route:projects');
       assert.ok(route);
     });
   });
