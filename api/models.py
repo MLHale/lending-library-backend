@@ -248,7 +248,8 @@ class UserProfileSerializer(serializers.ModelSerializer):
 			'is_active',
 			'last_login',
 			'date_joined',
-			'org'
+			'org',
+			'roles'
 			)
 
 class ItemTypeSerializer(serializers.ModelSerializer):
@@ -287,7 +288,6 @@ class ItemSerializer(serializers.ModelSerializer):
 		'barcode',
 		'status',
 		'owner',
-		'order',
 		'checkedoutto'
 		)
 
@@ -317,9 +317,10 @@ class OrderSerializer(serializers.ModelSerializer):
 		'id',
 		'user',
 		'status',
+		'items',
 		'createdon',
 		'fulfilledon',
-		'returndon',
+		'returnedon',
 		'missingparts'
 		)
 
