@@ -24,6 +24,9 @@ class Organization(models.Model):
 	state = models.CharField(max_length=2, blank=False)
 	zipcode = models.CharField(max_length=20, blank=False)
 
+	class JSONAPIMeta:
+		resource_name = "organizations"
+
 	def __str__(self):
 		return self.name
 
@@ -46,6 +49,9 @@ class UserProfile(models.Model):
 		choices=USER_ROLE_CHOICES
 		)
 
+	class JSONAPIMeta:
+		resource_name = "userprofiles"
+
 	def __str__(self):
 		return self.user.username
 
@@ -62,6 +68,9 @@ class ItemType(models.Model):
 		default="notfound.jpg"
 		)
 
+	class JSONAPIMeta:
+		resource_name = "itemtypes"
+
 	def __str__(self):
 		return self.name
 
@@ -77,6 +86,9 @@ class Cart(models.Model):
 		through_fields=('cart', 'itemtype'),
 	)
 
+	class JSONAPIMeta:
+		resource_name = "carts"
+
 	def __str__(self):
 		return "Cart: %s" % self.user
 
@@ -88,6 +100,9 @@ class CartItemTypeRel(models.Model):
 	cart = models.ForeignKey(Cart, blank=False)
 	itemtype = models.ForeignKey(ItemType, blank=False)
 	quantity = models.PositiveIntegerField(blank=True, default=1)
+
+	class JSONAPIMeta:
+		resource_name = "cartitemtyperels"
 
 	def __str__(self):
 		return "%s -> ItemType: %s" % (self.cart, self.itemtype)
@@ -126,6 +141,9 @@ class Item(models.Model):
 		related_name='items'
 		)
 
+	class JSONAPIMeta:
+		resource_name = "items"
+
 	def __str__(self):
 		return "Item: %s ID: %s" % (self.type, self.id)
 
@@ -140,6 +158,9 @@ class History(models.Model):
 	fulfilledon = models.DateField(null=True, blank=True)
 	returnedon = models.DateField(null=True, blank=True)
 	missingparts = models.TextField(max_length=1000, blank=True)
+
+	class JSONAPIMeta:
+		resource_name = "historys" # Not sure if this changes to histories or not
 
 	def __str__(self):
 		return "History ID: %s User: %s Returned: %s" % (
@@ -178,6 +199,9 @@ class Order(models.Model):
 	returnedon = models.DateField(null=True, blank=True)
 	missingparts = models.TextField(max_length=1000, blank=True)
 
+	class JSONAPIMeta:
+		resource_name = "orders"
+
 	def __str__(self):
 		return "Order ID: %s" % self.id
 
@@ -194,6 +218,9 @@ class Package(models.Model):
 		through_fields=('package', 'itemtype'),
 	)
 
+	class JSONAPIMeta:
+		resource_name = "packages"
+
 	def __str__(self):
 		return self.name
 
@@ -205,6 +232,9 @@ class PackageItemTypeRel(models.Model):
 	package = models.ForeignKey(Package, blank=False)
 	itemtype = models.ForeignKey(ItemType, blank=False)
 	quantity = models.PositiveIntegerField(blank=True, default=1)
+
+	class JSONAPIMeta:
+		resource_name = "packageitemtyperels"
 
 	def __str__(self):
 		return "Package: %s -> ItemType: %s" % (self.package, self.itemtype)

@@ -32,6 +32,11 @@ router.register(r'checkouts', controllers.CheckoutViewSet)
 router.register(r'items', controllers.ItemViewSet)
 # router.register(r'categories', controllers.CategoriesViewSet)
 
+# Attempting ItemType communication with frontend
+router.register(r'itemtypes', controllers.ItemTypeView, base_name='itemtypes')
+router.register(r'packages', controllers.PackageView, base_name='packages')
+router.register(r'package-itemtype-rels', controllers.PackageItemTypeRelView, base_name='package-itemtype-rels')
+
 urlpatterns = [
     url(r'^session', csrf_exempt(controllers.Session.as_view())),
     url(r'^register', csrf_exempt(controllers.Register.as_view())),

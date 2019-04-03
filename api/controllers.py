@@ -66,6 +66,35 @@ def admin_or_401(request):
     if not (request.user.is_staff or request.user.is_superuser):
         return Response({'success': False},status=status.HTTP_401_UNAUTHORIZED)
 
+class ItemTypeView(viewsets.ModelViewSet):
+	"""
+	Endpoint for loading ItemTypes
+	"""
+	permission_classes = (AllowAny,)
+	serializer_class = api.ItemTypeSerializer
+
+	def get_queryset(self):
+		return api.ItemType.objects.all()
+
+class PackageView(viewsets.ModelViewSet):
+	"""
+	Endpoint for loading Packages
+	"""
+	permission_classes = (AllowAny,)
+	serializer_class = api.PackageSerializer
+
+	def get_queryset(self):
+		return api.Package.objects.all()
+
+class PackageItemTypeRelView(viewsets.ModelViewSet):
+	"""
+	Endpoint for loading Package-ItemType relations
+	"""
+	permission_classes = (AllowAny,)
+	serializer_class = api.PackageSerializer
+
+	def get_queryset(self):
+		return api.PackageItemTypeRel.objects.all()
 
 class CheckoutViewSet(viewsets.ModelViewSet):
 	"""
