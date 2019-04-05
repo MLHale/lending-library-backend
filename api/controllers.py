@@ -70,31 +70,17 @@ class ItemTypeView(viewsets.ModelViewSet):
 	"""
 	Endpoint for loading ItemTypes
 	"""
+	queryset = api.ItemType.objects.all()
 	permission_classes = (AllowAny,)
 	serializer_class = api.ItemTypeSerializer
-
-	def get_queryset(self):
-		return api.ItemType.objects.all()
 
 class PackageView(viewsets.ModelViewSet):
 	"""
 	Endpoint for loading Packages
 	"""
+	queryset = api.Package.objects.all()
 	permission_classes = (AllowAny,)
 	serializer_class = api.PackageSerializer
-
-	def get_queryset(self):
-		return api.Package.objects.all()
-
-class PackageItemTypeRelView(viewsets.ModelViewSet):
-	"""
-	Endpoint for loading Package-ItemType relations
-	"""
-	permission_classes = (AllowAny,)
-	serializer_class = api.PackageSerializer
-
-	def get_queryset(self):
-		return api.PackageItemTypeRel.objects.all()
 
 class CheckoutViewSet(viewsets.ModelViewSet):
 	"""

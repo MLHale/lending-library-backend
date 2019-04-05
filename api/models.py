@@ -30,12 +30,6 @@ class Organization(models.Model):
 	def __str__(self):
 		return self.name
 
-ADMIN = 'ADM'
-LENDER = 'LEN'
-USER_ROLE_CHOICES = (
-	(ADMIN,'Admin'),
-	(LENDER, 'Lender'),
-)
 class UserProfile(models.Model):
 	"""
 	This model extends django.contib.auth's User model. It allows a User to have
@@ -43,11 +37,8 @@ class UserProfile(models.Model):
 	"""
 	user = models.OneToOneField(User, on_delete=models.CASCADE)
 	org = models.ForeignKey(Organization, blank=False)
-	roles = models.TextField(
-		max_length=200,
-		blank=True,
-		choices=USER_ROLE_CHOICES
-		)
+	isadmin = models.BooleanField(default=False)
+	islender = models.BooleanField(default=False)
 
 	class JSONAPIMeta:
 		resource_name = "userprofiles"
@@ -80,11 +71,9 @@ class Cart(models.Model):
 	selects from the Lending Library.
 	"""
 	user = models.ForeignKey(UserProfile, blank=False)
-	items = models.ManyToManyField(
-		ItemType,
-		through='CartItemTypeRel',
-		through_fields=('cart', 'itemtype'),
-	)
+
+	# Implicit Fields
+	# cartitemtypequantities
 
 	class JSONAPIMeta:
 		resource_name = "carts"
@@ -92,20 +81,26 @@ class Cart(models.Model):
 	def __str__(self):
 		return "Cart: %s" % self.user
 
-class CartItemTypeRel(models.Model):
+class CartItemTypeQuantity(models.Model):
 	"""
 	This model allows a Cart to contain different ItemTypes of varying
 	quantities.
 	"""
-	cart = models.ForeignKey(Cart, blank=False)
-	itemtype = models.ForeignKey(ItemType, blank=False)
+	cart = models.ForeignKey(Cart,
+		blank=False,
+		related_name="cartitemtypequantities",
+		on_delete=models.CASCADE)
+	itemtype = models.ForeignKey(ItemType,
+		blank=False,
+		on_delete=models.CASCADE)
 	quantity = models.PositiveIntegerField(blank=True, default=1)
 
 	class JSONAPIMeta:
-		resource_name = "cartitemtyperels"
+		resource_name = "cartitemtypequantities"
 
 	def __str__(self):
-		return "%s -> ItemType: %s" % (self.cart, self.itemtype)
+		return "%s -> ItemType: %s -> Quantity: %s" \
+			% (self.cart, self.itemtype, self.quantity)
 
 AVAIL = 'AVA'
 CO = 'CO'
@@ -160,7 +155,7 @@ class History(models.Model):
 	missingparts = models.TextField(max_length=1000, blank=True)
 
 	class JSONAPIMeta:
-		resource_name = "historys" # Not sure if this changes to histories or not
+		resource_name = "histories"
 
 	def __str__(self):
 		return "History ID: %s User: %s Returned: %s" % (
@@ -212,11 +207,9 @@ class Package(models.Model):
 	"""
 	name = models.CharField(max_length=200, blank=False)
 	description = models.TextField(max_length=1000, blank=False)
-	items = models.ManyToManyField(
-		ItemType,
-		through='PackageItemTypeRel',
-		through_fields=('package', 'itemtype'),
-	)
+
+	# Implicit Fields
+	# packageitemtypequantities
 
 	class JSONAPIMeta:
 		resource_name = "packages"
@@ -224,20 +217,26 @@ class Package(models.Model):
 	def __str__(self):
 		return self.name
 
-class PackageItemTypeRel(models.Model):
+class PackageItemTypeQuantity(models.Model):
 	"""
 	This model enables the Package model to contain various quantities of
 	multiple ItemTypes.
 	"""
-	package = models.ForeignKey(Package, blank=False)
-	itemtype = models.ForeignKey(ItemType, blank=False)
+	package = models.ForeignKey(Package,
+		blank=False,
+		related_name="packageitemtypequantities",
+		on_delete=models.CASCADE)
+	itemtype = models.ForeignKey(ItemType,
+		blank=False,
+		on_delete=models.CASCADE)
 	quantity = models.PositiveIntegerField(blank=True, default=1)
 
 	class JSONAPIMeta:
-		resource_name = "packageitemtyperels"
+		resource_name = "packageitemtypequantities"
 
 	def __str__(self):
-		return "Package: %s -> ItemType: %s" % (self.package, self.itemtype)
+		return "Package: %s -> ItemType: %s -> Quantity: %s" \
+			% (self.package, self.itemtype, self.quantity)
 
 # Begin Serializers
 
@@ -257,9 +256,6 @@ class OrganizationSerializer(serializers.ModelSerializer):
 			'zipcode'
 			)
 
-# This serializer exceeds what is provided by the model itself
-# Can a serializer include fields from a parent model?
-# (UserProfile essentially extends django.contrib.auth's User model)
 class UserProfileSerializer(serializers.ModelSerializer):
 	"""
 	Allows for serialization and deserialization of the UserProfile model.
@@ -268,19 +264,20 @@ class UserProfileSerializer(serializers.ModelSerializer):
 		model = UserProfile
 		fields = (
 			'id',
+			'org',
+			'isadmin',
+			'islender'
+			)
+
+class UserSerializer(serializers.ModelSerializer):
+	class Meta:
+		model = User
+		fields = (
 			'username',
 			'first_name',
 			'last_name',
-			'email',
-			'password',
-			'user_permissions',
-			'is_superuser',
-			'is_active',
-			'last_login',
-			'date_joined',
-			'org',
-			'roles'
-			)
+			'email'
+		)
 
 class ItemTypeSerializer(serializers.ModelSerializer):
 	"""
@@ -290,21 +287,28 @@ class ItemTypeSerializer(serializers.ModelSerializer):
 		model = ItemType
 		fields = ('id', 'name', 'description', 'imagepath')
 
-class CartSerializer(serializers.ModelSerializer):
-	"""
-	Allows for serialization and deserialization of the Cart model.
-	"""
-	class Meta:
-		model = Cart
-		fields = ('id', 'user', 'items')
-
-class CartItemTypeRelSerializer(serializers.ModelSerializer):
+class CartItemTypeQuantitySerializer(serializers.ModelSerializer):
 	"""
 	Allows for serialization and deserialization of the CartItemTypeRel model.
 	"""
 	class Meta:
-		model = CartItemTypeRel
+		model = CartItemTypeQuantity
 		fields = ('id', 'cart', 'itemtype', 'quantity')
+
+class CartSerializer(serializers.ModelSerializer):
+	"""
+	Allows for serialization and deserialization of the Cart model.
+	"""
+	included_serializers = {
+		'cartitemtypequantities': CartItemTypeQuantitySerializer,
+	}
+
+	class Meta:
+		model = Cart
+		fields = ('id', 'user')
+
+	class JSONAPIMeta:
+		included_resources = ['cartitemtypequantities']
 
 class ItemSerializer(serializers.ModelSerializer):
 	"""
@@ -354,19 +358,26 @@ class OrderSerializer(serializers.ModelSerializer):
 		'missingparts'
 		)
 
+class PackageItemTypeQuantitySerializer(serializers.ModelSerializer):
+	"""
+	Allows for serialization and deserialization of the PackageItemTypeQuantity
+	model.
+	"""
+	class Meta:
+		model = PackageItemTypeQuantity
+		fields = ('id', 'package', 'itemtype', 'quantity')
+
 class PackageSerializer(serializers.ModelSerializer):
 	"""
 	Allows for serialization and deserialization of the Package model.
 	"""
+	included_serializers = {
+		'packageitemtypequantities': PackageItemTypeQuantitySerializer,
+	}
+
 	class Meta:
 		model = Package
-		fields = ('id', 'name', 'description', 'items')
+		fields = ('id', 'name', 'description', 'packageitemtypequantities')
 
-class PackageItemTypeRelSerializer(serializers.ModelSerializer):
-	"""
-	Allows for serialization and deserialization of the PackageItemTypeRel
-	model.
-	"""
-	class Meta:
-		model = PackageItemTypeRel
-		fields = ('id', 'package', 'itemtype', 'quantity')
+	class JSONAPIMeta:
+		included_resources = ['packageitemtypequantities']
