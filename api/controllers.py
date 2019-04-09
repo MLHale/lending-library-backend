@@ -334,7 +334,7 @@ class Session(APIView):
 		# Get the current user
 		user = request.user
 		if user.is_authenticated():
-			profile = get_object_or_404(api.Profile,user__username=user.username)
+			profile = get_object_or_404(api.UserProfile,user__username=user.username)
 			return self.form_response(True, user.id, user.username, profile.id)
 		return self.form_response(False, None, None, None)
 
@@ -347,7 +347,7 @@ class Session(APIView):
 		if user is not None:
 			if user.is_active:
 				login(request, user)
-				profile = get_object_or_404(api.Profile,user__username=user.username)
+				profile = get_object_or_404(api.UserProfile,user__username=user.username)
 				return self.form_response(True, user.id, user.username, profile.id)
 			return self.form_response(False, None, None, None, "Account is suspended")
 		return self.form_response(False, None, None, None, "Invalid username or password")
