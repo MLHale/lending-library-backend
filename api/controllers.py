@@ -82,6 +82,67 @@ class PackageView(viewsets.ModelViewSet):
 	permission_classes = (AllowAny,)
 	serializer_class = api.PackageSerializer
 
+class CartViewSet(viewsets.ModelViewSet):
+	#permission_classes = (IsAuthenticated,)
+	permission_classes = (AllowAny,)
+	queryset = api.Cart.objects.all()
+	serializer_class = api.CartSerializer
+	#resource_name = 'cartitemtypequanitites'
+	# queryset = api.Cart.objects.all()
+        # Session.
+	#queryset = api.CartItemTypeQuantity.objects.all()
+	# queryset2 = api.Cart.objects.all()
+	#serializer_class = api.CartItemTypeQuantitySerializer
+        prefetch_for_includes = {
+                '__all__': [],
+                'items': ['items'],
+        }
+        
+	#filter_fields = ('id', 'user')
+	def get_queryset(self):
+                queryset = api.Cart.objects.all()
+                return queryset
+
+        def list(self, request ):
+	        queryset = api.Cart.objects.all()
+                serializer = api.CartSerializer(queryset, many=True)
+		return Response(serializer.data)
+
+
+#class CartViewSet(viewsets.ModelViewSet):
+#	#permission_classes = (IsAuthenticated,)
+#	permission_classes = (AllowAny,)
+#	queryset = api.CartItemTypeQuantity.objects.all()
+#	serializer_class = api.CartItemTypeQuantitySerializer
+#	#resource_name = 'cartitemtypequanitites'
+#	# queryset = api.Cart.objects.all()
+#        # Session.
+#	#queryset = api.CartItemTypeQuantity.objects.all()
+#	# queryset2 = api.Cart.objects.all()
+#	#serializer_class = api.CartItemTypeQuantitySerializer
+#        
+#	#filter_fields = ('id', 'user')
+#	def get_queryset(self):
+#                queryset = api.CartItemTypeQuantity.objects.all()
+#                return queryset
+#
+#        def list(self, request ):
+#	        queryset = api.CartItemTypeQuantity.objects.all()
+#                serializer = api.CartItemTypeQuantitySerializer(queryset, many=True)
+#		return Response(serializer.data)
+                
+	#def update(self, request):
+	#        #queryset1 = api.Cart.objects.get(user=request.user.id)
+        #        #queryset2 = api.CartItemTypeQuantity.objects.get(cart=queryset1.pk);
+        #        try:
+        #                q = CartItemTypeQuantity.objects.get(itemtype=1)
+        #                if q:
+        #                        q.quantity += 1
+        #                        q.save()
+        #       except Entry.DoesNotExist as q:
+        #                #create new CartItemTypeQuantity
+        #                CartItemTypeQuantity.objects.create(1,1,1)
+
 class CheckoutViewSet(viewsets.ModelViewSet):
 	"""
 	Endpoint that loads the people checking out the Items
@@ -257,7 +318,7 @@ class UserViewSet(viewsets.ModelViewSet):
 	Endpoint that allows user data to be viewed.
 	"""
 	resource_name = 'users'
-	serializer_class = api.UserProfileSerializer
+	serializer_class = api.UserSerializer
 	queryset = User.objects.all()
 	permission_classes = (IsAuthenticated,)
 
@@ -266,6 +327,23 @@ class UserViewSet(viewsets.ModelViewSet):
 		if user.is_superuser:
 			return User.objects.all()
 		return User.objects.filter(username=user.username)
+
+class UserProfileViewSet(viewsets.ModelViewSet):
+	"""
+	Endpoint that allows user data to be viewed.
+	"""
+	resource_name = 'userprofiles'
+	serializer_class = api.UserProfileSerializer
+	queryset = api.UserProfile.objects.all()
+	permission_classes = (IsAuthenticated,)
+
+	#def get_queryset(self):
+	#	user = self.request.userprofiles.user
+	#	#user = self.request.query_params.get('id', None)
+	#	if user.is_superuser:
+	#		return UserProfile.objects.all()
+	#	return UserProfile.objects.filter(username=user.username)
+
 
 class Register(APIView):
 	permission_classes = (AllowAny,)
