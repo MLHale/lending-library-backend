@@ -93,19 +93,19 @@ class CartViewSet(viewsets.ModelViewSet):
 	#queryset = api.CartItemTypeQuantity.objects.all()
 	# queryset2 = api.Cart.objects.all()
 	#serializer_class = api.CartItemTypeQuantitySerializer
-        prefetch_for_includes = {
-                '__all__': [],
-                'items': ['items'],
-        }
-        
+	prefetch_for_includes = {
+		'__all__': [],
+		'items': ['items'],
+		}
+
 	#filter_fields = ('id', 'user')
 	def get_queryset(self):
-                queryset = api.Cart.objects.all()
-                return queryset
+		queryset = api.Cart.objects.all()
+		return queryset
 
-        def list(self, request ):
-	        queryset = api.Cart.objects.all()
-                serializer = api.CartSerializer(queryset, many=True)
+	def list(self, request ):
+		queryset = api.Cart.objects.all()
+		serializer = api.CartSerializer(queryset, many=True)
 		return Response(serializer.data)
 
 
@@ -120,7 +120,7 @@ class CartViewSet(viewsets.ModelViewSet):
 #	#queryset = api.CartItemTypeQuantity.objects.all()
 #	# queryset2 = api.Cart.objects.all()
 #	#serializer_class = api.CartItemTypeQuantitySerializer
-#        
+#
 #	#filter_fields = ('id', 'user')
 #	def get_queryset(self):
 #                queryset = api.CartItemTypeQuantity.objects.all()
@@ -130,7 +130,7 @@ class CartViewSet(viewsets.ModelViewSet):
 #	        queryset = api.CartItemTypeQuantity.objects.all()
 #                serializer = api.CartItemTypeQuantitySerializer(queryset, many=True)
 #		return Response(serializer.data)
-                
+
 	#def update(self, request):
 	#        #queryset1 = api.Cart.objects.get(user=request.user.id)
         #        #queryset2 = api.CartItemTypeQuantity.objects.get(cart=queryset1.pk);
@@ -183,7 +183,7 @@ class ItemViewSet(viewsets.ModelViewSet):
 	serializer_class = api.ItemSerializer
 	queryset = api.Item.objects.all()
 	permission_classes = (AllowAny,)
-	filter_fileds = ('id', 'partname', 'owner', 'checkedoutto', 'description')
+	filter_fields = ('id', 'partname', 'owner', 'checkedoutto', 'description')
 
 	def create(self, request, *args, **kwargs):
 
@@ -258,7 +258,7 @@ class CategoriesViewSet(viewsets.ModelViewSet):
 	serializer_class = api.ItemSerializer
 	queryset = api.Item.objects.all()
 	permission_classes = (AllowAny,)
-	filter_fileds = ('id', 'categoryname', 'description')
+	filter_fields = ('id', 'categoryname', 'description')
 
 	def create(self, request, *args, **kwargs):
 
@@ -337,12 +337,11 @@ class UserProfileViewSet(viewsets.ModelViewSet):
 	queryset = api.UserProfile.objects.all()
 	permission_classes = (IsAuthenticated,)
 
-	#def get_queryset(self):
-	#	user = self.request.userprofiles.user
-	#	#user = self.request.query_params.get('id', None)
-	#	if user.is_superuser:
-	#		return UserProfile.objects.all()
-	#	return UserProfile.objects.filter(username=user.username)
+	def get_queryset(self):
+		user = self.request.query_params.get('id', None)
+		if user.is_superuser:
+			return api.UserProfile.objects.all()
+		return api.UserProfile.objects.filter(username=user.username)
 
 
 class Register(APIView):
