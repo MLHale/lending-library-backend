@@ -32,8 +32,7 @@ class Organization(models.Model):
 
 class UserProfile(models.Model):
 	"""
-	This model extends django.contib.auth's User model. It allows a User to have
-	an Organization and optional roles.
+	This model allows a User to have an Organization and isadmin/islender flags.
 	"""
 	user = models.OneToOneField(User, on_delete=models.CASCADE)
 	org = models.ForeignKey(Organization, blank=False)
@@ -274,8 +273,6 @@ class UserSerializer(serializers.ModelSerializer):
 		model = User
 		fields = (
 			'username',
-			'first_name',
-			'last_name',
 			'email'
 		)
 

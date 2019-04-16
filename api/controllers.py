@@ -82,6 +82,31 @@ class PackageView(viewsets.ModelViewSet):
 	permission_classes = (AllowAny,)
 	serializer_class = api.PackageSerializer
 
+class OrganizationViewSet(viewsets.ModelViewSet):
+	"""
+	Endpoint for loading Organizations
+	"""
+	queryset = api.Organization.objects.all()
+	permission_classes = (AllowAny,)
+	serializer_class = api.OrganizationSerializer
+
+class UserProfileViewSet(viewsets.ModelViewSet):
+	"""
+	Endpoint that allows user data to be viewed.
+	"""
+	queryset = api.UserProfile.objects.all()
+	#permission_classes = (IsAuthenticated,)
+	permission_classes = (AllowAny,)
+	serializer_class = api.UserProfileSerializer
+
+
+	#def get_queryset(self):
+		#print(self.request.user)
+		#user = self.request.user
+		#if user.is_superuser:
+			#return api.UserProfile.objects.all()
+		#return api.UserProfile.objects.filter(user__username=user.username)
+
 class CartViewSet(viewsets.ModelViewSet):
 	#permission_classes = (IsAuthenticated,)
 	permission_classes = (AllowAny,)
@@ -328,20 +353,7 @@ class UserViewSet(viewsets.ModelViewSet):
 			return User.objects.all()
 		return User.objects.filter(username=user.username)
 
-class UserProfileViewSet(viewsets.ModelViewSet):
-	"""
-	Endpoint that allows user data to be viewed.
-	"""
-	resource_name = 'userprofiles'
-	serializer_class = api.UserProfileSerializer
-	queryset = api.UserProfile.objects.all()
-	permission_classes = (IsAuthenticated,)
 
-	def get_queryset(self):
-		user = self.request.query_params.get('id', None)
-		if user.is_superuser:
-			return api.UserProfile.objects.all()
-		return api.UserProfile.objects.filter(username=user.username)
 
 
 class Register(APIView):
