@@ -259,6 +259,10 @@ class UserProfileSerializer(serializers.ModelSerializer):
 	"""
 	Allows for serialization and deserialization of the UserProfile model.
 	"""
+	included_serializers = {
+		'org': OrganizationSerializer,
+	}
+
 	class Meta:
 		model = UserProfile
 		fields = (
@@ -267,6 +271,9 @@ class UserProfileSerializer(serializers.ModelSerializer):
 			'isadmin',
 			'islender'
 			)
+
+	class JSONAPIMeta:
+		included_resources = ['org',]
 
 class UserSerializer(serializers.ModelSerializer):
 	class Meta:
@@ -302,7 +309,7 @@ class CartSerializer(serializers.ModelSerializer):
 
 	class Meta:
 		model = Cart
-		fields = ('id', 'user')
+		fields = ('id', 'user', 'cartitemtypequantities')
 
 	class JSONAPIMeta:
 		included_resources = ['cartitemtypequantities']
