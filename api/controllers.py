@@ -118,20 +118,16 @@ class CartViewSet(viewsets.ModelViewSet):
 	#queryset = api.CartItemTypeQuantity.objects.all()
 	# queryset2 = api.Cart.objects.all()
 	#serializer_class = api.CartItemTypeQuantitySerializer
-	prefetch_for_includes = {
-		'__all__': [],
-		'items': ['items'],
-		}
 
 	#filter_fields = ('id', 'user')
-	def get_queryset(self):
-		queryset = api.Cart.objects.all()
-		return queryset
-
-	def list(self, request ):
-		queryset = api.Cart.objects.all()
-		serializer = api.CartSerializer(queryset, many=True)
-		return Response(serializer.data)
+	# def get_queryset(self):
+	# 	queryset = api.Cart.objects.all()
+	# 	return queryset
+	#
+	# def list(self, request ):
+	# 	queryset = api.Cart.objects.all()
+	# 	serializer = api.CartSerializer(queryset, many=True)
+	# 	return Response(serializer.data)
 
 
 #class CartViewSet(viewsets.ModelViewSet):

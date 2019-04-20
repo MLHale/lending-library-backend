@@ -39,6 +39,9 @@ class UserProfile(models.Model):
 	isadmin = models.BooleanField(default=False)
 	islender = models.BooleanField(default=False)
 
+	# implicit fields
+	# cart
+
 	class JSONAPIMeta:
 		resource_name = "userprofiles"
 
@@ -69,7 +72,7 @@ class Cart(models.Model):
 	This model allows a user to have a Cart. It can contain items that the User
 	selects from the Lending Library.
 	"""
-	user = models.ForeignKey(UserProfile, blank=False)
+	user = models.OneToOneField(UserProfile, related_name="cart", blank=True, null=True)
 
 	# Implicit Fields
 	# cartitemtypequantities
@@ -255,26 +258,6 @@ class OrganizationSerializer(serializers.ModelSerializer):
 			'zipcode'
 			)
 
-class UserProfileSerializer(serializers.ModelSerializer):
-	"""
-	Allows for serialization and deserialization of the UserProfile model.
-	"""
-	included_serializers = {
-		'org': OrganizationSerializer,
-	}
-
-	class Meta:
-		model = UserProfile
-		fields = (
-			'id',
-			'org',
-			'isadmin',
-			'islender'
-			)
-
-	class JSONAPIMeta:
-		included_resources = ['org',]
-
 class UserSerializer(serializers.ModelSerializer):
 	class Meta:
 		model = User
@@ -312,7 +295,7 @@ class CartSerializer(serializers.ModelSerializer):
 		fields = ('id', 'user', 'cartitemtypequantities')
 
 	class JSONAPIMeta:
-		included_resources = ['cartitemtypequantities']
+		included_resources = ['cartitemtypequantities',]
 
 class ItemSerializer(serializers.ModelSerializer):
 	"""
@@ -384,4 +367,26 @@ class PackageSerializer(serializers.ModelSerializer):
 		fields = ('id', 'name', 'description', 'packageitemtypequantities')
 
 	class JSONAPIMeta:
-		included_resources = ['packageitemtypequantities']
+		included_resources = ['packageitemtypequantities',]
+
+class UserProfileSerializer(serializers.ModelSerializer):
+	"""
+	Allows for serialization and deserialization of the UserProfile model.
+	"""
+	included_serializers = {
+		'organizations': OrganizationSerializer,
+		'carts': CartSerializer,
+	}
+
+	class Meta:
+		model = UserProfile
+		fields = (
+			'id',
+			'org',
+			'isadmin',
+			'islender',
+			'cart',
+			)
+
+	class JSONAPIMeta:
+		included_resources = ['organizations','carts',]

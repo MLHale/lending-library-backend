@@ -31,7 +31,7 @@ router.register(r'organizations', controllers.OrganizationViewSet, base_name='or
 # router.register(r'applicanttypes', controllers.ApplicanttypeViewSet)
 # router.register(r'sources', controllers.SourceViewSet)
 router.register(r'checkouts', controllers.CheckoutViewSet)
-router.register(r'carts', controllers.CartViewSet, base_name='cart')
+router.register(r'carts', controllers.CartViewSet, base_name='carts')
 #router.register(r'carts/(?P<pk>[^/.]+)/$', controllers.CartViewSet.as_view({'get': 'retrieve'}), name='cart-detail')
 #router.register(r'carts/(?P<pk>[^/.]+)/(?P<related_field>\w+/$', controllers.CartViewSet.as_view({'get': 'retrieve_related'}), name='cart-related')
 router.register(r'items', controllers.ItemViewSet)
