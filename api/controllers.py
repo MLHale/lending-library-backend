@@ -128,7 +128,10 @@ class CartViewSet(viewsets.ModelViewSet):
 	# 	queryset = api.Cart.objects.all()
 	# 	serializer = api.CartSerializer(queryset, many=True)
 	# 	return Response(serializer.data)
-
+class CartItemTypeQuantityViewSet(viewsets.ModelViewSet):
+	permission_classes = (AllowAny,)
+	queryset = api.CartItemTypeQuantity.objects.all()
+	serializer_class = api.CartItemTypeQuantitySerializer
 
 #class CartViewSet(viewsets.ModelViewSet):
 #	#permission_classes = (IsAuthenticated,)
