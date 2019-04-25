@@ -100,72 +100,17 @@ class UserProfileViewSet(viewsets.ModelViewSet):
 	serializer_class = api.UserProfileSerializer
 
 
-	#def get_queryset(self):
-		#print(self.request.user)
-		#user = self.request.user
-		#if user.is_superuser:
-			#return api.UserProfile.objects.all()
-		#return api.UserProfile.objects.filter(user__username=user.username)
-
 class CartViewSet(viewsets.ModelViewSet):
 	#permission_classes = (IsAuthenticated,)
 	permission_classes = (AllowAny,)
 	queryset = api.Cart.objects.all()
 	serializer_class = api.CartSerializer
-	#resource_name = 'cartitemtypequanitites'
-	# queryset = api.Cart.objects.all()
-        # Session.
-	#queryset = api.CartItemTypeQuantity.objects.all()
-	# queryset2 = api.Cart.objects.all()
-	#serializer_class = api.CartItemTypeQuantitySerializer
 
-	#filter_fields = ('id', 'user')
-	# def get_queryset(self):
-	# 	queryset = api.Cart.objects.all()
-	# 	return queryset
-	#
-	# def list(self, request ):
-	# 	queryset = api.Cart.objects.all()
-	# 	serializer = api.CartSerializer(queryset, many=True)
-	# 	return Response(serializer.data)
 class CartItemTypeQuantityViewSet(viewsets.ModelViewSet):
 	permission_classes = (AllowAny,)
 	queryset = api.CartItemTypeQuantity.objects.all()
 	serializer_class = api.CartItemTypeQuantitySerializer
 
-#class CartViewSet(viewsets.ModelViewSet):
-#	#permission_classes = (IsAuthenticated,)
-#	permission_classes = (AllowAny,)
-#	queryset = api.CartItemTypeQuantity.objects.all()
-#	serializer_class = api.CartItemTypeQuantitySerializer
-#	#resource_name = 'cartitemtypequanitites'
-#	# queryset = api.Cart.objects.all()
-#        # Session.
-#	#queryset = api.CartItemTypeQuantity.objects.all()
-#	# queryset2 = api.Cart.objects.all()
-#	#serializer_class = api.CartItemTypeQuantitySerializer
-#
-#	#filter_fields = ('id', 'user')
-#	def get_queryset(self):
-#                queryset = api.CartItemTypeQuantity.objects.all()
-#                return queryset
-#
-#        def list(self, request ):
-#	        queryset = api.CartItemTypeQuantity.objects.all()
-#                serializer = api.CartItemTypeQuantitySerializer(queryset, many=True)
-#		return Response(serializer.data)
-
-	#def update(self, request):
-	#        #queryset1 = api.Cart.objects.get(user=request.user.id)
-        #        #queryset2 = api.CartItemTypeQuantity.objects.get(cart=queryset1.pk);
-        #        try:
-        #                q = CartItemTypeQuantity.objects.get(itemtype=1)
-        #                if q:
-        #                        q.quantity += 1
-        #                        q.save()
-        #       except Entry.DoesNotExist as q:
-        #                #create new CartItemTypeQuantity
-        #                CartItemTypeQuantity.objects.create(1,1,1)
 
 class CheckoutViewSet(viewsets.ModelViewSet):
 	"""
@@ -199,80 +144,22 @@ class CheckoutViewSet(viewsets.ModelViewSet):
 
 		return Response(serializer.data)
 
+
 class ItemViewSet(viewsets.ModelViewSet):
 	"""
-	Endpoint to view the items
+	Endpoint for loading Items
 	"""
-	resource_name = 'items'
-	serializer_class = api.ItemSerializer
 	queryset = api.Item.objects.all()
 	permission_classes = (AllowAny,)
-	filter_fields = ('id', 'partname', 'owner', 'checkedoutto', 'description')
+	serializer_class = api.ItemSerializer
 
-	def create(self, request, *args, **kwargs):
-
-		print(request.data.get('owner'))
-		print(request.data.get('checkedoutto'))
-
-		partname = request.data.get('partname')
-		owner = api.User.objects.get(pk=request.data.get('owner').get('id'))
-		description = request.data.get('description')
-		if request.data.get('checkedoutto') is not None:
-			checkedoutto = api.Checkout.objects.get(pk=request.data.get('checkedoutto').get('id'))
-		else:
-			checkedoutto = None
-		# owner = UserSerializer(get_object_or_404(User, user__id=request.data.get('owner')))
-		# serializer = ProfileSerializer(get_object_or_404(Profile, user__id=userid))
-
-		print(owner)
-		print(checkedoutto)
-
-		newItem = Item(
-			partname=partname,
-			owner=owner,
-			description=description,
-			checkedoutto=checkedoutto
-		)
-		try:
-			newItem.clean_fields()
-		except ValidationError as e:
-			print(e)
-			print(str(request.data.get('owner')))
-			print(str(request.data.get('checkedoutto')))
-			return Response({'success':False, 'error':e}, status=status.HTTP_400_BAD_REQUEST)
-
-		newItem.save()
-		return Response({'success': True}, status=status.HTTP_200_OK)
-
-	# def create(self, request):
-	#
-	# 	admin_or_401(request)
-	#
-	# 	serializer = api.ItemSerializer(data=request.data)
-	# 	if not serializer.is_valid():
-	# 		return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-	#
-	# 	serializer.save()
-	#
-	# 	return Response(serializer.data)
-
-	def update(self, request, pk=None):
-		admin_or_401(request)
-
-		serializer = api.ItemSerializer(data=request.data)
-		if not serializer.is_valid():
-			return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-		serializer.save()
-
-		return Response(serializer.data)
-
-	@action(detail=False)
-	def count(self, request):
-		partname = self.request.query_params.get('partname', None)
-		items = Item.objects.all().filter(partname=partname)
-		countitems = items.aggregate(Count('partname'))
-		return Response({'count': countitems})
+class OrderViewSet(viewsets.ModelViewSet):
+	"""
+	Endpoint for loading Orders
+	"""
+	queryset = api.Order.objects.all()
+	permission_classes = (AllowAny,)
+	serializer_class = api.OrderSerializer
 
 class CategoriesViewSet(viewsets.ModelViewSet):
 	"""

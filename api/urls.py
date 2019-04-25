@@ -35,7 +35,8 @@ router.register(r'carts', controllers.CartViewSet, base_name='carts')
 router.register(r'cartitemtypequantities', controllers.CartItemTypeQuantityViewSet, base_name='cartitemtypequantities')
 #router.register(r'carts/(?P<pk>[^/.]+)/$', controllers.CartViewSet.as_view({'get': 'retrieve'}), name='cart-detail')
 #router.register(r'carts/(?P<pk>[^/.]+)/(?P<related_field>\w+/$', controllers.CartViewSet.as_view({'get': 'retrieve_related'}), name='cart-related')
-router.register(r'items', controllers.ItemViewSet)
+router.register(r'items', controllers.ItemViewSet, base_name='items')
+router.register(r'orders', controllers.OrderViewSet, base_name='orders')
 # router.register(r'categories', controllers.CategoriesViewSet)
 
 # Attempting ItemType communication with frontend
