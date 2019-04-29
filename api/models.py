@@ -301,6 +301,9 @@ class ItemSerializer(serializers.ModelSerializer):
 	"""
 	Allows for serialization and deserialization of the Item model.
 	"""
+	included_serializers = {
+		'itemtypes': ItemTypeSerializer,
+	}
 	class Meta:
 		model = Item
 		fields = (
@@ -311,6 +314,9 @@ class ItemSerializer(serializers.ModelSerializer):
 		'owner',
 		'checkedoutto'
 		)
+		
+	class JSONAPIMeta:
+		included_resources = ['itemtypes',]
 
 class HistorySerializer(serializers.ModelSerializer):
 	"""
