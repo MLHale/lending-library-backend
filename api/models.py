@@ -314,7 +314,7 @@ class ItemSerializer(serializers.ModelSerializer):
 		'owner',
 		'checkedoutto'
 		)
-		
+
 	class JSONAPIMeta:
 		included_resources = ['itemtypes',]
 
@@ -381,7 +381,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
 	"""
 	included_serializers = {
 		'organizations': OrganizationSerializer,
-		'carts': CartSerializer,
+		'cart': CartSerializer,
 	}
 
 	class Meta:
@@ -395,4 +395,4 @@ class UserProfileSerializer(serializers.ModelSerializer):
 			)
 
 	class JSONAPIMeta:
-		included_resources = ['organizations','carts',]
+		included_resources = ['organizations','cart',]
