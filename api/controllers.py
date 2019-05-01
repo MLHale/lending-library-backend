@@ -87,7 +87,7 @@ class OrganizationViewSet(viewsets.ModelViewSet):
 	Endpoint for loading Organizations
 	"""
 	queryset = api.Organization.objects.all()
-	permission_classes = (AllowAny,)
+	permission_classes = (IsAuthenticated,)
 	serializer_class = api.OrganizationSerializer
 
 class UserProfileViewSet(viewsets.ModelViewSet):
@@ -95,20 +95,18 @@ class UserProfileViewSet(viewsets.ModelViewSet):
 	Endpoint that allows user data to be viewed.
 	"""
 	queryset = api.UserProfile.objects.all()
-	#permission_classes = (IsAuthenticated,)
-	permission_classes = (AllowAny,)
+	permission_classes = (IsAuthenticated,)
 	serializer_class = api.UserProfileSerializer
 
 
 class CartViewSet(viewsets.ModelViewSet):
-	#permission_classes = (IsAuthenticated,)
-	permission_classes = (AllowAny,)
 	queryset = api.Cart.objects.all()
+	permission_classes = (IsAuthenticated,)
 	serializer_class = api.CartSerializer
 
 class CartItemTypeQuantityViewSet(viewsets.ModelViewSet):
-	permission_classes = (AllowAny,)
 	queryset = api.CartItemTypeQuantity.objects.all()
+	permission_classes = (IsAuthenticated,)
 	serializer_class = api.CartItemTypeQuantitySerializer
 
 
@@ -150,7 +148,7 @@ class ItemViewSet(viewsets.ModelViewSet):
 	Endpoint for loading Items
 	"""
 	queryset = api.Item.objects.all()
-	permission_classes = (AllowAny,)
+	permission_classes = (IsAuthenticated,)
 	serializer_class = api.ItemSerializer
 
 class OrderViewSet(viewsets.ModelViewSet):
@@ -158,7 +156,7 @@ class OrderViewSet(viewsets.ModelViewSet):
 	Endpoint for loading Orders
 	"""
 	queryset = api.Order.objects.all()
-	permission_classes = (AllowAny,)
+	permission_classes = (IsAuthenticated,)
 	serializer_class = api.OrderSerializer
 
 class CategoriesViewSet(viewsets.ModelViewSet):
