@@ -1,14 +1,15 @@
 # Lending Library Backend API
-This Backend API is written using the Django framework. It allows for the following functionality:
+This Backend API is written using the Django framework. It is a component of the lending-library-site-builds project along with lending-library-frontend. It allows for the following functionality:
 * The UserProfile model allows storing of user information and identifies special user roles if applicable.
 * The Organization model stores address information related to a user so that shipping services can be provided.
 * The Item model allows the physical equipment to be mapped to specific records in the database.
 * The ItemType model describes an item and provides an image path.
 * The Cart model allows the user to place items into a cart before placing an order.
+* The CartItemTypeQuantity model is used to define line items placed within the cart.
 * The Package model allows users to place an order for a predefined group of items so that they do not have to be added to the cart individually.
+* The PackageItemTypeQuantity model is used to define line items contained within a package.
 * The Order model allows tracking of the order status along with the items associated with the order.
 * The History model can be used to migrate completed orders into a separate data set so that active orders can be queried quickly.
-
 
 # License
 The Lending Library App is a search-oriented library management app for maintaining the UNO lending library.
