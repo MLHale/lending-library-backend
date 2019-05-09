@@ -10576,7 +10576,6 @@ define('@ember/test-helpers/setup-application-context', ['exports', '@ember/test
     @public
     @returns {string} the currently active route name
   */
-  /* globals EmberENV */
   function currentRouteName() {
     let { owner } = (0, _setupContext.getContext)();
     let router = owner.lookup('router:main');
@@ -10864,7 +10863,6 @@ define('@ember/test-helpers/setup-rendering-context', ['exports', '@ember/test-h
   exports.render = render;
   exports.clearRender = clearRender;
   exports.default = setupRenderingContext;
-  /* globals EmberENV */
   const RENDERING_CLEANUP = exports.RENDERING_CLEANUP = Object.create(null);
   const OUTLET_TEMPLATE = Ember.HTMLBars.template({
     "id": "em3WhaQV",
@@ -12509,8 +12507,6 @@ define('ember-test-helpers/legacy-0-6-x/build-registry', ['exports', 'require'],
     };
   };
 
-  /* globals global, self, requirejs */
-
   function exposeRegistryMethodsWithoutDeprecations(container) {
     var methods = ['register', 'unregister', 'resolve', 'normalize', 'typeInjection', 'injection', 'factoryInjection', 'factoryTypeInjection', 'has', 'options', 'optionsForType'];
 
@@ -12617,7 +12613,8 @@ define('ember-test-helpers/legacy-0-6-x/test-module-for-component', ['exports', 
     value: true
   });
   exports.setupComponentIntegrationTest = setupComponentIntegrationTest;
-  /* globals EmberENV */
+
+
   let ACTION_KEY;
   if ((0, _hasEmberVersion.default)(2, 0)) {
     ACTION_KEY = 'actions';
