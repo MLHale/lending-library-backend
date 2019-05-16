@@ -29,6 +29,7 @@ define('lend-database/tests/integration/components/list-pagination-test', ['quni
     });
   });
 });
+<<<<<<< HEAD
 define('lend-database/tests/integration/helpers/subtotal-test', ['qunit', 'ember-qunit', '@ember/test-helpers'], function (_qunit, _emberQunit, _testHelpers) {
   'use strict';
 
@@ -49,6 +50,8 @@ define('lend-database/tests/integration/helpers/subtotal-test', ['qunit', 'ember
     });
   });
 });
+=======
+>>>>>>> 89431ae7b28bff0c82ab3fd4f030b6eafa35dabe
 define('lend-database/tests/lint/app.lint-test', [], function () {
   'use strict';
 
@@ -185,12 +188,21 @@ define('lend-database/tests/lint/app.lint-test', [], function () {
   });
 
   QUnit.test('routes/library/index.js', function (assert) {
+<<<<<<< HEAD
     assert.expect(1);
     assert.ok(true, 'routes/library/index.js should pass ESLint\n\n');
   });
 
   QUnit.test('routes/library/library-items.js', function (assert) {
     assert.expect(1);
+=======
+    assert.expect(1);
+    assert.ok(true, 'routes/library/index.js should pass ESLint\n\n');
+  });
+
+  QUnit.test('routes/library/library-items.js', function (assert) {
+    assert.expect(1);
+>>>>>>> 89431ae7b28bff0c82ab3fd4f030b6eafa35dabe
     assert.ok(true, 'routes/library/library-items.js should pass ESLint\n\n');
   });
 
@@ -241,7 +253,11 @@ define('lend-database/tests/lint/templates.template.lint-test', [], function () 
 
   QUnit.test('lend-database/templates/about.hbs', function (assert) {
     assert.expect(1);
+<<<<<<< HEAD
     assert.ok(false, 'lend-database/templates/about.hbs should pass TemplateLint.\n\nlend-database/templates/about.hbs\n  6:20  error  elements cannot have inline styles  no-inline-styles\n');
+=======
+    assert.ok(false, 'lend-database/templates/about.hbs should pass TemplateLint.\n\nlend-database/templates/about.hbs\n  2:80  error  elements cannot have inline styles  no-inline-styles\n');
+>>>>>>> 89431ae7b28bff0c82ab3fd4f030b6eafa35dabe
   });
 
   QUnit.test('lend-database/templates/application.hbs', function (assert) {
@@ -251,7 +267,11 @@ define('lend-database/tests/lint/templates.template.lint-test', [], function () 
 
   QUnit.test('lend-database/templates/cart.hbs', function (assert) {
     assert.expect(1);
+<<<<<<< HEAD
     assert.ok(false, 'lend-database/templates/cart.hbs should pass TemplateLint.\n\nlend-database/templates/cart.hbs\n  43:10  error  elements cannot have inline styles  no-inline-styles\n');
+=======
+    assert.ok(false, 'lend-database/templates/cart.hbs should pass TemplateLint.\n\nlend-database/templates/cart.hbs\n  49:6  error  elements cannot have inline styles  no-inline-styles\n  59:31  error  elements cannot have inline styles  no-inline-styles\n');
+>>>>>>> 89431ae7b28bff0c82ab3fd4f030b6eafa35dabe
   });
 
   QUnit.test('lend-database/templates/checkout.hbs', function (assert) {
@@ -276,12 +296,20 @@ define('lend-database/tests/lint/templates.template.lint-test', [], function () 
 
   QUnit.test('lend-database/templates/library/library-items.hbs', function (assert) {
     assert.expect(1);
+<<<<<<< HEAD
     assert.ok(false, 'lend-database/templates/library/library-items.hbs should pass TemplateLint.\n\nlend-database/templates/library/library-items.hbs\n  15:12  error  HTML comment detected  no-html-comments\n  8:64  error  elements cannot have inline styles  no-inline-styles\n');
+=======
+    assert.ok(false, 'lend-database/templates/library/library-items.hbs should pass TemplateLint.\n\nlend-database/templates/library/library-items.hbs\n  6:52  error  elements cannot have inline styles  no-inline-styles\n');
+>>>>>>> 89431ae7b28bff0c82ab3fd4f030b6eafa35dabe
   });
 
   QUnit.test('lend-database/templates/login.hbs', function (assert) {
     assert.expect(1);
+<<<<<<< HEAD
     assert.ok(false, 'lend-database/templates/login.hbs should pass TemplateLint.\n\nlend-database/templates/login.hbs\n  10:34  error  elements cannot have inline styles  no-inline-styles\n  21:34  error  elements cannot have inline styles  no-inline-styles\n  34:14  error  elements cannot have inline styles  no-inline-styles\n');
+=======
+    assert.ok(false, 'lend-database/templates/login.hbs should pass TemplateLint.\n\nlend-database/templates/login.hbs\n  8:28  error  elements cannot have inline styles  no-inline-styles\n  19:28  error  elements cannot have inline styles  no-inline-styles\n  31:79  error  elements cannot have inline styles  no-inline-styles\n');
+>>>>>>> 89431ae7b28bff0c82ab3fd4f030b6eafa35dabe
   });
 
   QUnit.test('lend-database/templates/register.hbs', function (assert) {
@@ -304,11 +332,14 @@ define('lend-database/tests/lint/tests.lint-test', [], function () {
     assert.ok(true, 'integration/components/list-pagination-test.js should pass ESLint\n\n');
   });
 
+<<<<<<< HEAD
   QUnit.test('integration/helpers/subtotal-test.js', function (assert) {
     assert.expect(1);
     assert.ok(true, 'integration/helpers/subtotal-test.js should pass ESLint\n\n');
   });
 
+=======
+>>>>>>> 89431ae7b28bff0c82ab3fd4f030b6eafa35dabe
   QUnit.test('test-helper.js', function (assert) {
     assert.expect(1);
     assert.ok(true, 'test-helper.js should pass ESLint\n\n');

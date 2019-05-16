@@ -115,6 +115,7 @@
 /* To hide the scroll bar when expanding the bootstrap accordion */
 ::-webkit-scrollbar {
   display: none;
+<<<<<<< HEAD
 }
 
 
@@ -189,3 +190,6 @@
 }
 
 .overflow-hidden { overflow: hidden; }
+=======
+}
+>>>>>>> 89431ae7b28bff0c82ab3fd4f030b6eafa35dabe

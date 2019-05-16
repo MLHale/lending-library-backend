@@ -158,6 +158,7 @@ class CategorySerializer(serializers.ModelSerializer):
         # fields = '__all__'
 
 
+
 class ProfileSerializer(serializers.ModelSerializer):
     included_serializers = {
         'user': UserSerializer
