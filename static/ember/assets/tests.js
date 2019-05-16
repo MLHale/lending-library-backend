@@ -1,34 +1,5 @@
 'use strict';
 
-define('lend-database/tests/integration/components/cart-view-test', ['qunit', 'ember-qunit', '@ember/test-helpers'], function (_qunit, _emberQunit, _testHelpers) {
-  'use strict';
-
-  (0, _qunit.module)('Integration | Component | cart-view', function (hooks) {
-    (0, _emberQunit.setupRenderingTest)(hooks);
-
-    (0, _qunit.test)('it renders', async function (assert) {
-      // Set any properties with this.set('myProperty', 'value');
-      // Handle any actions with this.set('myAction', function(val) { ... });
-
-      await (0, _testHelpers.render)(Ember.HTMLBars.template({
-        "id": "yC85RsdO",
-        "block": "{\"symbols\":[],\"statements\":[[1,[21,\"cart-view\"],false]],\"hasEval\":false}",
-        "meta": {}
-      }));
-
-      assert.equal(this.element.textContent.trim(), '');
-
-      // Template block usage:
-      await (0, _testHelpers.render)(Ember.HTMLBars.template({
-        "id": "AtDKIIh5",
-        "block": "{\"symbols\":[],\"statements\":[[0,\"\\n\"],[4,\"cart-view\",null,null,{\"statements\":[[0,\"        template block text\\n\"]],\"parameters\":[]},null],[0,\"    \"]],\"hasEval\":false}",
-        "meta": {}
-      }));
-
-      assert.equal(this.element.textContent.trim(), 'template block text');
-    });
-  });
-});
 define('lend-database/tests/integration/components/list-pagination-test', ['qunit', 'ember-qunit', '@ember/test-helpers'], function (_qunit, _emberQunit, _testHelpers) {
   'use strict';
 
@@ -58,32 +29,23 @@ define('lend-database/tests/integration/components/list-pagination-test', ['quni
     });
   });
 });
-define('lend-database/tests/integration/components/login-page-test', ['qunit', 'ember-qunit', '@ember/test-helpers'], function (_qunit, _emberQunit, _testHelpers) {
+define('lend-database/tests/integration/helpers/subtotal-test', ['qunit', 'ember-qunit', '@ember/test-helpers'], function (_qunit, _emberQunit, _testHelpers) {
   'use strict';
 
-  (0, _qunit.module)('Integration | Component | login-page', function (hooks) {
+  (0, _qunit.module)('Integration | Helper | subtotal', function (hooks) {
     (0, _emberQunit.setupRenderingTest)(hooks);
 
+    // Replace this with your real tests.
     (0, _qunit.test)('it renders', async function (assert) {
-      // Set any properties with this.set('myProperty', 'value');
-      // Handle any actions with this.set('myAction', function(val) { ... });
+      this.set('inputValue', '1234');
 
       await (0, _testHelpers.render)(Ember.HTMLBars.template({
-        "id": "X6rDzQhY",
-        "block": "{\"symbols\":[],\"statements\":[[1,[21,\"login-page\"],false]],\"hasEval\":false}",
+        "id": "gwa4IIDz",
+        "block": "{\"symbols\":[],\"statements\":[[1,[27,\"subtotal\",[[23,[\"inputValue\"]]],null],false]],\"hasEval\":false}",
         "meta": {}
       }));
 
-      assert.equal(this.element.textContent.trim(), '');
-
-      // Template block usage:
-      await (0, _testHelpers.render)(Ember.HTMLBars.template({
-        "id": "Trx7nnsR",
-        "block": "{\"symbols\":[],\"statements\":[[0,\"\\n\"],[4,\"login-page\",null,null,{\"statements\":[[0,\"        template block text\\n\"]],\"parameters\":[]},null],[0,\"    \"]],\"hasEval\":false}",
-        "meta": {}
-      }));
-
-      assert.equal(this.element.textContent.trim(), 'template block text');
+      assert.equal(this.element.textContent.trim(), '1234');
     });
   });
 });
@@ -102,19 +64,9 @@ define('lend-database/tests/lint/app.lint-test', [], function () {
     assert.ok(true, 'app.js should pass ESLint\n\n');
   });
 
-  QUnit.test('components/cart-view.js', function (assert) {
-    assert.expect(1);
-    assert.ok(true, 'components/cart-view.js should pass ESLint\n\n');
-  });
-
   QUnit.test('components/list-pagination.js', function (assert) {
     assert.expect(1);
     assert.ok(true, 'components/list-pagination.js should pass ESLint\n\n');
-  });
-
-  QUnit.test('components/login-page.js', function (assert) {
-    assert.expect(1);
-    assert.ok(true, 'components/login-page.js should pass ESLint\n\n');
   });
 
   QUnit.test('controllers/application.js', function (assert) {
@@ -160,6 +112,11 @@ define('lend-database/tests/lint/app.lint-test', [], function () {
   QUnit.test('controllers/system.js', function (assert) {
     assert.expect(1);
     assert.ok(true, 'controllers/system.js should pass ESLint\n\n');
+  });
+
+  QUnit.test('helpers/subtotal.js', function (assert) {
+    assert.expect(1);
+    assert.ok(true, 'helpers/subtotal.js should pass ESLint\n\n');
   });
 
   QUnit.test('initializers/auth-manager.js', function (assert) {
@@ -262,6 +219,16 @@ define('lend-database/tests/lint/app.lint-test', [], function () {
     assert.ok(true, 'services/navigation.js should pass ESLint\n\n');
   });
 
+  QUnit.test('services/shopping-cart.js', function (assert) {
+    assert.expect(1);
+    assert.ok(true, 'services/shopping-cart.js should pass ESLint\n\n');
+  });
+
+  QUnit.test('storages/cart.js', function (assert) {
+    assert.expect(1);
+    assert.ok(true, 'storages/cart.js should pass ESLint\n\n');
+  });
+
   QUnit.test('transitions.js', function (assert) {
     assert.expect(1);
     assert.ok(true, 'transitions.js should pass ESLint\n\n');
@@ -274,7 +241,7 @@ define('lend-database/tests/lint/templates.template.lint-test', [], function () 
 
   QUnit.test('lend-database/templates/about.hbs', function (assert) {
     assert.expect(1);
-    assert.ok(false, 'lend-database/templates/about.hbs should pass TemplateLint.\n\nlend-database/templates/about.hbs\n  2:80  error  elements cannot have inline styles  no-inline-styles\n');
+    assert.ok(false, 'lend-database/templates/about.hbs should pass TemplateLint.\n\nlend-database/templates/about.hbs\n  6:20  error  elements cannot have inline styles  no-inline-styles\n');
   });
 
   QUnit.test('lend-database/templates/application.hbs', function (assert) {
@@ -284,7 +251,7 @@ define('lend-database/tests/lint/templates.template.lint-test', [], function () 
 
   QUnit.test('lend-database/templates/cart.hbs', function (assert) {
     assert.expect(1);
-    assert.ok(false, 'lend-database/templates/cart.hbs should pass TemplateLint.\n\nlend-database/templates/cart.hbs\n  114:4  error  elements cannot have inline styles  no-inline-styles\n  116:29  error  elements cannot have inline styles  no-inline-styles\n');
+    assert.ok(false, 'lend-database/templates/cart.hbs should pass TemplateLint.\n\nlend-database/templates/cart.hbs\n  43:10  error  elements cannot have inline styles  no-inline-styles\n');
   });
 
   QUnit.test('lend-database/templates/checkout.hbs', function (assert) {
@@ -292,19 +259,9 @@ define('lend-database/tests/lint/templates.template.lint-test', [], function () 
     assert.ok(true, 'lend-database/templates/checkout.hbs should pass TemplateLint.\n\n');
   });
 
-  QUnit.test('lend-database/templates/components/cart-view.hbs', function (assert) {
-    assert.expect(1);
-    assert.ok(true, 'lend-database/templates/components/cart-view.hbs should pass TemplateLint.\n\n');
-  });
-
   QUnit.test('lend-database/templates/components/list-pagination.hbs', function (assert) {
     assert.expect(1);
     assert.ok(false, 'lend-database/templates/components/list-pagination.hbs should pass TemplateLint.\n\nlend-database/templates/components/list-pagination.hbs\n  2:24  error  elements cannot have inline styles  no-inline-styles\n  3:73  error  elements cannot have inline styles  no-inline-styles\n');
-  });
-
-  QUnit.test('lend-database/templates/components/login-page.hbs', function (assert) {
-    assert.expect(1);
-    assert.ok(true, 'lend-database/templates/components/login-page.hbs should pass TemplateLint.\n\n');
   });
 
   QUnit.test('lend-database/templates/index.hbs', function (assert) {
@@ -319,12 +276,12 @@ define('lend-database/tests/lint/templates.template.lint-test', [], function () 
 
   QUnit.test('lend-database/templates/library/library-items.hbs', function (assert) {
     assert.expect(1);
-    assert.ok(false, 'lend-database/templates/library/library-items.hbs should pass TemplateLint.\n\nlend-database/templates/library/library-items.hbs\n  6:52  error  elements cannot have inline styles  no-inline-styles\n');
+    assert.ok(false, 'lend-database/templates/library/library-items.hbs should pass TemplateLint.\n\nlend-database/templates/library/library-items.hbs\n  15:12  error  HTML comment detected  no-html-comments\n  8:64  error  elements cannot have inline styles  no-inline-styles\n');
   });
 
   QUnit.test('lend-database/templates/login.hbs', function (assert) {
     assert.expect(1);
-    assert.ok(false, 'lend-database/templates/login.hbs should pass TemplateLint.\n\nlend-database/templates/login.hbs\n  8:28  error  elements cannot have inline styles  no-inline-styles\n  19:28  error  elements cannot have inline styles  no-inline-styles\n  31:79  error  elements cannot have inline styles  no-inline-styles\n');
+    assert.ok(false, 'lend-database/templates/login.hbs should pass TemplateLint.\n\nlend-database/templates/login.hbs\n  10:34  error  elements cannot have inline styles  no-inline-styles\n  21:34  error  elements cannot have inline styles  no-inline-styles\n  34:14  error  elements cannot have inline styles  no-inline-styles\n');
   });
 
   QUnit.test('lend-database/templates/register.hbs', function (assert) {
@@ -342,19 +299,14 @@ define('lend-database/tests/lint/tests.lint-test', [], function () {
 
   QUnit.module('ESLint | tests');
 
-  QUnit.test('integration/components/cart-view-test.js', function (assert) {
-    assert.expect(1);
-    assert.ok(true, 'integration/components/cart-view-test.js should pass ESLint\n\n');
-  });
-
   QUnit.test('integration/components/list-pagination-test.js', function (assert) {
     assert.expect(1);
     assert.ok(true, 'integration/components/list-pagination-test.js should pass ESLint\n\n');
   });
 
-  QUnit.test('integration/components/login-page-test.js', function (assert) {
+  QUnit.test('integration/helpers/subtotal-test.js', function (assert) {
     assert.expect(1);
-    assert.ok(true, 'integration/components/login-page-test.js should pass ESLint\n\n');
+    assert.ok(true, 'integration/helpers/subtotal-test.js should pass ESLint\n\n');
   });
 
   QUnit.test('test-helper.js', function (assert) {
@@ -535,6 +487,11 @@ define('lend-database/tests/lint/tests.lint-test', [], function () {
   QUnit.test('unit/services/navigation-test.js', function (assert) {
     assert.expect(1);
     assert.ok(true, 'unit/services/navigation-test.js should pass ESLint\n\n');
+  });
+
+  QUnit.test('unit/services/shopping-cart-test.js', function (assert) {
+    assert.expect(1);
+    assert.ok(true, 'unit/services/shopping-cart-test.js should pass ESLint\n\n');
   });
 });
 define('lend-database/tests/test-helper', ['lend-database/app', 'lend-database/config/environment', '@ember/test-helpers', 'ember-qunit'], function (_app, _environment, _testHelpers, _emberQunit) {
@@ -1042,6 +999,19 @@ define('lend-database/tests/unit/services/navigation-test', ['qunit', 'ember-qun
     // Replace this with your real tests.
     (0, _qunit.test)('it exists', function (assert) {
       let service = this.owner.lookup('service:navigation');
+      assert.ok(service);
+    });
+  });
+});
+define('lend-database/tests/unit/services/shopping-cart-test', ['qunit', 'ember-qunit'], function (_qunit, _emberQunit) {
+  'use strict';
+
+  (0, _qunit.module)('Unit | Service | shopping-cart', function (hooks) {
+    (0, _emberQunit.setupTest)(hooks);
+
+    // Replace this with your real tests.
+    (0, _qunit.test)('it exists', function (assert) {
+      let service = this.owner.lookup('service:shopping-cart');
       assert.ok(service);
     });
   });

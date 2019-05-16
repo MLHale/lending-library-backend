@@ -43,6 +43,9 @@ class Category(models.Model):
     description = models.TextField(max_length=1000, blank=False)
     image = models.ImageField(upload_to='img', blank=False)
 
+    # Implicit fields
+    # items
+
     def __str__(self):
         return str(self.categoryname)
 
@@ -59,7 +62,6 @@ class Item(models.Model):
         Checkout, on_delete=models.CASCADE, related_name='items', null=True, blank=True)
     category = models.ForeignKey(
         Category, related_name='items', on_delete=models.CASCADE, default=1)
-    price = models.DecimalField(max_digits=6, decimal_places=2, default=0.00)
 
     def __str__(self):
         return str(self.partname)
@@ -152,8 +154,8 @@ class CategorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Category
-        #fields = ('id', 'partname', 'owner', 'description', 'checkedoutto')
-        fields = '__all__'
+        fields = ('id', 'categoryname', 'description', 'image', 'items')
+        # fields = '__all__'
 
 
 class ProfileSerializer(serializers.ModelSerializer):
