@@ -41,6 +41,7 @@ from api.pagination import *
 from django.core import serializers
 from django.core.exceptions import ValidationError
 from api.models import Item
+from api.models import ItemType
 from api.models import Category
 from django.db.models import Count
 
@@ -106,17 +107,16 @@ class ItemViewSet(viewsets.ModelViewSet):
 	serializer_class = api.ItemSerializer
 	queryset = api.Item.objects.all()
 	permission_classes = (AllowAny,)
-	filter_fileds = ('id', 'partname', 'owner', 'checkedoutto', 'description')
+	filter_fileds = ('id', 'itemtype', 'owner', 'checkedoutto')
 
 	def create(self, request, *args, **kwargs):
 
+		print(request.data.get('itemtype'))
 		print(request.data.get('owner'))
 		print(request.data.get('checkedoutto'))
 
-		partname = request.data.get('partname')
 		owner = api.User.objects.get(pk=request.data.get('owner').get('id'))
-		description = request.data.get('description')
-		categoryname = request.gdata.get('categoryname')
+		itemtype = request.gdata.get('itemtype')
 
 		if request.data.get('checkedoutto') is not None:
 			checkedoutto = api.Checkout.objects.get(pk=request.data.get('checkedoutto').get('id'))
@@ -125,20 +125,20 @@ class ItemViewSet(viewsets.ModelViewSet):
 		# owner = UserSerializer(get_object_or_404(User, user__id=request.data.get('owner')))
 		# serializer = ProfileSerializer(get_object_or_404(Profile, user__id=userid))
 
+		print(itemtype)
 		print(owner)
 		print(checkedoutto)
 
 		newItem = Item(
-			partname=partname,
+			itemtype=itemtype,
 			owner=owner,
-			description=description,
-			checkedoutto=checkedoutto,
-			categoryname=categoryname,
+			checkedoutto=checkedoutto
 		)
 		try:
 			newItem.clean_fields()
 		except ValidationError as e:
 			print(e)
+			print(str(request.data.get('itemtype')))
 			print(str(request.data.get('owner')))
 			print(str(request.data.get('checkedoutto')))
 			return Response({'success':False, 'error':e}, status=status.HTTP_400_BAD_REQUEST)
@@ -171,10 +171,85 @@ class ItemViewSet(viewsets.ModelViewSet):
 
 	@action(detail=False)
 	def count(self, request):
+		owner = api.User.objects.get(pk=request.data.get('owner').get('id'))
+		items = Item.objects.all().filter(owner=owner)
+		countitems = items.aggregate(Count('owner'))
+		return Response({'count': countitems})
+
+
+class ItemTypeViewSet(viewsets.ModelViewSet):
+	"""
+	Endpoint to view the itemtypes
+	"""
+	resource_name = 'itemtypes'
+	serializer_class = api.ItemTypeSerializer
+	queryset = api.ItemType.objects.all()
+	permission_classes = (AllowAny,)
+	filter_fileds = ('id', 'partname', 'description', 'category', 'items')
+
+	def create(self, request, *args, **kwargs):
+
+		print(request.data.get('partname'))
+		print(request.data.get('description'))
+		print(request.data.get('category'))
+
+		partname = request.data.get('partname')
+		description = request.data.get('description')
+		category = request.gdata.get('category') # Maybe categoryname
+
+		print(partname)
+		print(description)
+		print(category)
+
+		newItemType = ItemType(
+			partname=partname,
+			description=description,
+			category=category,
+		)
+		try:
+			newItemType.clean_fields()
+		except ValidationError as e:
+			print(e)
+			print(str(request.data.get('partname')))
+			print(str(request.data.get('description')))
+			print(str(request.data.get('category')))
+			return Response({'success':False, 'error':e}, status=status.HTTP_400_BAD_REQUEST)
+
+		newItemType.save()
+		return Response({'success': True}, status=status.HTTP_200_OK)
+
+
+	# def create(self, request):
+	# 
+	# 	admin_or_401(request)
+	# 
+	# 	serializer = api.ItemTypeSerializer(data=request.data)
+	# 	if not serializer.is_valid():
+	# 		return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+	# 
+	# 	serializer.save()
+	# 
+	# 	return Response(serializer.data)
+
+	def update(self, request, pk=None):
+		admin_or_401(request)
+
+		serializer = api.ItemTypeSerializer(data=request.data)
+		if not serializer.is_valid():
+			return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+		serializer.save()
+
+		return Response(serializer.data)
+
+	@action(detail=False)
+	def count(self, request):
 		partname = self.request.query_params.get('partname', None)
-		items = Item.objects.all().filter(partname=partname)
+		items = ItemType.objects.all().filter(partname=partname)
 		countitems = items.aggregate(Count('partname'))
 		return Response({'count': countitems})
+
+
 
 class CategoriesViewSet(viewsets.ModelViewSet):
 	"""

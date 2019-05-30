@@ -26,6 +26,7 @@ router.register(r'profiles', controllers.ProfileViewSet)
 # router.register(r'sources', controllers.SourceViewSet)
 router.register(r'checkouts', controllers.CheckoutViewSet)
 router.register(r'items', controllers.ItemViewSet)
+router.register(r'itemtypes', controllers.ItemTypeViewSet)
 router.register(r'categories', controllers.CategoriesViewSet)
 
 urlpatterns = [

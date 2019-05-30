@@ -38,38 +38,6 @@ class Checkout(models.Model):
         resource_name = "checkouts"
 
 
-class Category(models.Model):
-    categoryname = models.CharField(max_length=100, blank=False)
-    description = models.TextField(max_length=1000, blank=False)
-    image = models.ImageField(upload_to='img', blank=False)
-
-    # Implicit fields
-    # items
-
-    def __str__(self):
-        return str(self.categoryname)
-
-    class JSONAPIMeta:
-        resource_name = "categories"
-
-
-class Item(models.Model):
-    partname = models.CharField(max_length=100, blank=False)
-    owner = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name='items', blank=False)
-    description = models.TextField(max_length=1000, blank=False)
-    checkedoutto = models.ForeignKey(
-        Checkout, on_delete=models.CASCADE, related_name='items', null=True, blank=True)
-    category = models.ForeignKey(
-        Category, related_name='items', on_delete=models.CASCADE, default=1)
-
-    def __str__(self):
-        return str(self.partname)
-
-    class JSONAPIMeta:
-        resource_name = "items"
-
-
 class Profile(models.Model):
     UNL = 'unl'
     UNO = 'uno'
@@ -95,6 +63,57 @@ class Profile(models.Model):
         return str(self.user.username)
 
 
+class Category(models.Model):
+    categoryname = models.CharField(max_length=100, blank=False)
+    description = models.TextField(max_length=1000, blank=False)
+    image = models.ImageField(upload_to='img', blank=False)
+
+    # Implicit fields
+    # itemtypes
+
+    def __str__(self):
+        return str(self.categoryname)
+
+    class Meta:
+        verbose_name = "Categorie"
+
+    class JSONAPIMeta:
+        resource_name = "categories"
+
+
+class ItemType(models.Model):
+    partname = models.CharField(max_length=100, blank=False)
+    description = models.TextField(max_length=1000, blank=False)
+    category = models.ForeignKey(Category, related_name='itemtypes', on_delete=models.CASCADE, default=1)
+
+    # Implicit fields
+    # items
+
+    def __str__(self):
+        return str(self.partname)
+
+    class Meta:
+        verbose_name = "Item Type"
+
+    class JSONAPIMeta:
+        resource_name = "itemtypes"
+
+
+class Item(models.Model):
+    itemtype = models.ForeignKey(ItemType, related_name='items', on_delete=models.CASCADE, default=1)
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='items', blank=False)
+    checkedoutto = models.ForeignKey(Checkout, on_delete=models.CASCADE, related_name='items', null=True, blank=True)
+    
+    def __str__(self):
+        return str(self.itemtype.partname)
+
+    class Meta:
+        verbose_name = "Item"
+
+    class JSONAPIMeta:
+        resource_name = "items"
+
+
 class UserSerializer(serializers.ModelSerializer):
     lastname = serializers.CharField(source='last_name')
     firstname = serializers.CharField(source='first_name')
@@ -110,11 +129,12 @@ class UserSerializer(serializers.ModelSerializer):
 class InternalItemSerializer(serializers.ModelSerializer):
     #owner = UserSerializer(read_only = True)
     #checkedoutto = CheckoutSerializer(read_only = True)
-    included_serializers = {'owner': UserSerializer, }
+    included_serializers = {'owner': UserSerializer,}
 
     class Meta:
         model = Item
-        fields = ('id', 'partname', 'owner', 'description')
+        fields = ('id', 'itemtype', 'owner', 'checkedoutto')
+        # fields = '__all__'
 
     class JSONAPIMeta:
         included_resources = ['owner']
@@ -141,11 +161,19 @@ class ItemSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Item
-        # fields = ('id', 'partname', 'owner', 'description', 'checkedoutto')
-        fields = '__all__'
+        fields = ('id', 'itemtype', 'owner', 'checkedoutto')
+        # fields = '__all__'
 
     class JSONAPIMeta:
         included_resources = ['owner', 'checkedoutto']
+
+
+class ItemTypeSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = ItemType
+        fields = ('id', 'partname', 'description', 'category', 'items')
+        # fields = '__all__'
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -154,7 +182,7 @@ class CategorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Category
-        fields = ('id', 'categoryname', 'description', 'image', 'items')
+        fields = ('id', 'categoryname', 'description', 'image', 'itemtypes')
         # fields = '__all__'
 
 
