@@ -88,16 +88,39 @@ class CheckoutViewSet(viewsets.ModelViewSet):
 
 		return Response(serializer.data)
 
-	def update(self, request, pk=None):
+	def update(self, request, *args, **kwargs):
 		admin_or_401(request)
 
-		serializer = api.CheckoutSerializer(data=request.data)
-		if not serializer.is_valid():
-			return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+		partial = kwargs.pop('partial', False)
+		instance = self.get_object()
+		serializer = self.get_serializer(instance, data=request.data, partial=partial)
+		serializer.is_valid(raise_exception=True)
+		self.perform_update(serializer)
 
-		serializer.save()
+		if getattr(instance, '_prefetched_objects_cache', None):
+			instance._prefetched_objects_cache = {}
+
+		# serializer = api.CheckoutSerializer(data=request.data)
+		# if not serializer.is_valid():
+		# 	return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+		# serializer.save()
 
 		return Response(serializer.data)
+
+	# def partial_update(self, request, pk=None):
+    #     partial = kwargs.pop('partial', False)
+    #     instance = self.get_object()
+    #     serializer = self.get_serializer(instance, data=request.data, partial=partial)
+    #     serializer.is_valid(raise_exception=True)
+    #     self.perform_update(serializer)
+
+    #     if getattr(instance, '_prefetched_objects_cache', None):
+    #         # If 'prefetch_related' has been applied to a queryset, we need to
+    #         # forcibly invalidate the prefetch cache on the instance.
+    #         instance._prefetched_objects_cache = {}
+
+    #     return Response(serializer.data)
 
 class ItemViewSet(viewsets.ModelViewSet):
 	"""
@@ -458,7 +481,7 @@ class Register(APIView):
 			#     # cc=['cc@example.com'],
 			#     # bcc=['bcc@example.com'],
 			# )
-			return Response({'status': 'success', 'userid': newuser.id, 'profile': newprofile.id})
+			return Response({'status': 'success', 'userid': newuser.id, 'profile': newprofile.user})
 		else:
 			return Response({'status': 'error'})
 

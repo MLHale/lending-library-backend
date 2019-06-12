@@ -27,8 +27,8 @@ class Checkout(models.Model):
     numberofstudents = models.IntegerField(
         validators=[MinValueValidator(0), MaxValueValidator(99)], blank=False)
     createdon = models.DateTimeField(null=True, blank=True)
-    fulfilledon = models.DateField(null=True, blank=True)
-    returnedon = models.DateField(null=True, blank=True)
+    fulfilledon = models.DateTimeField(null=True, blank=True)
+    returnedon = models.DateTimeField(null=True, blank=True)
     missingparts = models.TextField(max_length=1000, blank=True)
 
     def __str__(self):
@@ -36,7 +36,6 @@ class Checkout(models.Model):
 
     class JSONAPIMeta:
         resource_name = "checkouts"
-
 
 class Profile(models.Model):
     UNL = 'unl'
@@ -57,7 +56,6 @@ class Profile(models.Model):
     college = models.CharField(max_length=1000, blank=True)
     dept = models.CharField(max_length=1000, blank=True)
     otherdetails = models.CharField(max_length=1000, blank=True)
-    # areasofinterest = models.ManyToManyField('Areaofinterest', related_name='profiles', blank=True)
 
     def __str__(self):
         return str(self.user.username)
@@ -75,7 +73,7 @@ class Category(models.Model):
         return str(self.categoryname)
 
     class Meta:
-        verbose_name = "Categorie"
+        verbose_name = "Category"
 
     class JSONAPIMeta:
         resource_name = "categories"

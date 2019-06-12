@@ -11438,6 +11438,100 @@ define('ember-local-storage/test-support/reset-storage', ['exports', 'ember-loca
   });
   exports.default = _storage._resetStorages;
 });
+define('ember-macro-helpers/test-support/compute', ['exports'], function (exports) {
+  'use strict';
+
+  Object.defineProperty(exports, "__esModule", {
+    value: true
+  });
+
+  exports.default = function ({
+    assert,
+    baseClass = Ember.Component,
+    computed,
+    properties,
+    strictEqual,
+    deepEqual,
+    assertion,
+    assertReadOnly
+  }) {
+    let MyComponent = baseClass.extend({
+      computed
+    });
+    let subject;
+    try {
+      subject = MyComponent.create({
+        renderer: {}
+      });
+    } catch (err) {
+      // this is for ember < 2.10
+      // can remove once only support 2.12
+      subject = MyComponent.create();
+    }
+
+    // compute initial value
+    // to test recomputes
+    Ember.get(subject, 'computed');
+
+    Ember.setProperties(subject, properties);
+
+    let result = Ember.get(subject, 'computed');
+
+    function doAssertion(result) {
+      if (assertion) {
+        assert.ok(assertion(result));
+      } else if (deepEqual) {
+        assert.deepEqual(result, deepEqual);
+      } else if (assertReadOnly) {
+        let func = () => Ember.set(subject, 'computed', 'assert read only');
+        assert.throws(func, /Cannot set read-only property/);
+      } else if (assert) {
+        assert.strictEqual(result, strictEqual);
+      }
+    }
+
+    let promise;
+    if (result && typeof result === 'object' && typeof result.then === 'function') {
+      promise = result.then(doAssertion);
+    } else {
+      doAssertion(result);
+    }
+
+    return {
+      subject,
+      result,
+      promise
+    };
+  };
+});
+define('ember-macro-helpers/test-support/expect-imports', ['exports'], function (exports) {
+  'use strict';
+
+  Object.defineProperty(exports, "__esModule", {
+    value: true
+  });
+
+  exports.default = function (assert, obj) {
+    assert.expect(Object.getOwnPropertyNames(obj).filter(p => exclude.indexOf(p) === -1).length);
+  };
+
+  const exclude = ['__esModule', 'default'];
+
+  // helps prevent forgetting to test a new import
+});
+define('ember-macro-helpers/test-support/index', ['exports', 'ember-macro-helpers/test-support/compute'], function (exports, _compute) {
+  'use strict';
+
+  Object.defineProperty(exports, "__esModule", {
+    value: true
+  });
+  Object.defineProperty(exports, 'compute', {
+    enumerable: true,
+    get: function () {
+      return _compute.default;
+    }
+  });
+});
 define('ember-qunit/adapter', ['exports', 'qunit', '@ember/test-helpers/has-ember-version'], function (exports, _qunit, _hasEmberVersion) {
   'use strict';
 

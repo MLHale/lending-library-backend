@@ -1,7 +1,7 @@
 {% block html %}
   <p>Hi {{username}},</p>
 
-  <p>You just signed up for my WiStem, using:
+  <p>You just signed up for the UNO Lending Library, using:
       <dl>
         <dt>username</dt><dd>{{username}}</dd>
         <dt>email</dt><dd>{{email}}</dd>
