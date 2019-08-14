@@ -181,14 +181,17 @@ class ItemViewSet(viewsets.ModelViewSet):
 	#
 	# 	return Response(serializer.data)
 
-	def update(self, request, pk=None):
+	def update(self, request, *args, **kwargs):
 		admin_or_401(request)
 
-		serializer = api.ItemSerializer(data=request.data)
-		if not serializer.is_valid():
-			return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+		partial = kwargs.pop('partial', False)
+		instance = self.get_object()
+		serializer = self.get_serializer(instance, data=request.data, partial=partial)
+		serializer.is_valid(raise_exception=True)
+		self.perform_update(serializer)
 
-		serializer.save()
+		if getattr(instance, '_prefetched_objects_cache', None):
+			instance._prefetched_objects_cache = {}
 
 		return Response(serializer.data)
 
@@ -449,8 +452,10 @@ class Register(APIView):
 		password = request.POST.get('password')
 		email = request.POST.get('email')
 		if username is not None and password is not None and email is not None:
-	        # lastname = request.POST.get('lastname')
-	        # firstname = request.POST.get('firstname')
+			lastname = request.POST.get('lastname')
+			firstname = request.POST.get('firstname')
+			address = request.POST.get('address')
+			phone = request.POST.get('phone')
 	        # org = request.POST.get('org')
 	        # college = request.POST.get('college')
 	        # dept = request.POST.get('dept')
@@ -459,13 +464,13 @@ class Register(APIView):
 	        # areas_of_interest = api.Areaofinterest.objects.get_or_create(name=areas_of_interest)
 
 			if User.objects.filter(username=username).exists():
-				return Response({'username': 'Username is taken.', 'status': 'error'})
+				return Response({'username': 'Username is taken.', 'status': 'error'}) 
 			elif User.objects.filter(email=email).exists():
 			    return Response({'email': 'Email is taken.', 'status': 'error'})
 			# especially before you pass them in here
-			newuser = User.objects.create_user(email=email, username=username, password=password)
-
-			newprofile = api.Profile(user=newuser)
+			newuser = User.objects.create_user(email=email, username=username, password=password, lastname=bleach.clean(lastname), firstname=bleach.clean(firstname))
+ 
+			newprofile = api.Profile(user=newuser, address=address, phonenumber=phone)
 
 			newprofile.save()
 			# Send email msg

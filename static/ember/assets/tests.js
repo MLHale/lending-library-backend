@@ -71,6 +71,104 @@ define('lend-database/tests/integration/components/list-pagination-test', ['quni
     });
   });
 });
+define('lend-database/tests/integration/components/n-times-test', ['qunit', 'ember-qunit', '@ember/test-helpers'], function (_qunit, _emberQunit, _testHelpers) {
+  'use strict';
+
+  (0, _qunit.module)('Integration | Component | n-times', function (hooks) {
+    (0, _emberQunit.setupRenderingTest)(hooks);
+
+    (0, _qunit.test)('it renders', async function (assert) {
+      // Set any properties with this.set('myProperty', 'value');
+      // Handle any actions with this.set('myAction', function(val) { ... });
+
+      await (0, _testHelpers.render)(Ember.HTMLBars.template({
+        "id": "WXLoK1qQ",
+        "block": "{\"symbols\":[],\"statements\":[[1,[21,\"n-times\"],false]],\"hasEval\":false}",
+        "meta": {}
+      }));
+
+      assert.equal(this.element.textContent.trim(), '');
+
+      // Template block usage:
+      await (0, _testHelpers.render)(Ember.HTMLBars.template({
+        "id": "a3jyG5Lc",
+        "block": "{\"symbols\":[],\"statements\":[[0,\"\\n\"],[4,\"n-times\",null,null,{\"statements\":[[0,\"        template block text\\n\"]],\"parameters\":[]},null],[0,\"    \"]],\"hasEval\":false}",
+        "meta": {}
+      }));
+
+      assert.equal(this.element.textContent.trim(), 'template block text');
+    });
+  });
+});
+define('lend-database/tests/integration/components/validated-input-test', ['qunit', 'ember-qunit', '@ember/test-helpers'], function (_qunit, _emberQunit, _testHelpers) {
+  'use strict';
+
+  (0, _qunit.module)('Integration | Component | validated-input', function (hooks) {
+    (0, _emberQunit.setupRenderingTest)(hooks);
+
+    (0, _qunit.test)('it renders', async function (assert) {
+      // Set any properties with this.set('myProperty', 'value');
+      // Handle any actions with this.set('myAction', function(val) { ... });
+
+      await (0, _testHelpers.render)(Ember.HTMLBars.template({
+        "id": "P6+B80df",
+        "block": "{\"symbols\":[],\"statements\":[[1,[21,\"validated-input\"],false]],\"hasEval\":false}",
+        "meta": {}
+      }));
+
+      assert.equal(this.element.textContent.trim(), '');
+
+      // Template block usage:
+      await (0, _testHelpers.render)(Ember.HTMLBars.template({
+        "id": "bGaISnw3",
+        "block": "{\"symbols\":[],\"statements\":[[0,\"\\n\"],[4,\"validated-input\",null,null,{\"statements\":[[0,\"        template block text\\n\"]],\"parameters\":[]},null],[0,\"    \"]],\"hasEval\":false}",
+        "meta": {}
+      }));
+
+      assert.equal(this.element.textContent.trim(), 'template block text');
+    });
+  });
+});
+define('lend-database/tests/integration/helpers/one-word-test', ['qunit', 'ember-qunit', '@ember/test-helpers'], function (_qunit, _emberQunit, _testHelpers) {
+  'use strict';
+
+  (0, _qunit.module)('Integration | Helper | one-word', function (hooks) {
+    (0, _emberQunit.setupRenderingTest)(hooks);
+
+    // Replace this with your real tests.
+    (0, _qunit.test)('it renders', async function (assert) {
+      this.set('inputValue', '1234');
+
+      await (0, _testHelpers.render)(Ember.HTMLBars.template({
+        "id": "iRWuk2bw",
+        "block": "{\"symbols\":[],\"statements\":[[1,[27,\"one-word\",[[23,[\"inputValue\"]]],null],false]],\"hasEval\":false}",
+        "meta": {}
+      }));
+
+      assert.equal(this.element.textContent.trim(), '1234');
+    });
+  });
+});
+define('lend-database/tests/integration/helpers/range-test', ['qunit', 'ember-qunit', '@ember/test-helpers'], function (_qunit, _emberQunit, _testHelpers) {
+  'use strict';
+
+  (0, _qunit.module)('Integration | Helper | range', function (hooks) {
+    (0, _emberQunit.setupRenderingTest)(hooks);
+
+    // Replace this with your real tests.
+    (0, _qunit.test)('it renders', async function (assert) {
+      this.set('inputValue', '1234');
+
+      await (0, _testHelpers.render)(Ember.HTMLBars.template({
+        "id": "OXe8lVzK",
+        "block": "{\"symbols\":[],\"statements\":[[1,[27,\"range\",[[23,[\"inputValue\"]]],null],false]],\"hasEval\":false}",
+        "meta": {}
+      }));
+
+      assert.equal(this.element.textContent.trim(), '1234');
+    });
+  });
+});
 define('lend-database/tests/lint/app.lint-test', [], function () {
   'use strict';
 
@@ -89,6 +187,21 @@ define('lend-database/tests/lint/app.lint-test', [], function () {
   QUnit.test('components/list-pagination.js', function (assert) {
     assert.expect(1);
     assert.ok(true, 'components/list-pagination.js should pass ESLint\n\n');
+  });
+
+  QUnit.test('components/n-times.js', function (assert) {
+    assert.expect(1);
+    assert.ok(true, 'components/n-times.js should pass ESLint\n\n');
+  });
+
+  QUnit.test('components/validated-input.js', function (assert) {
+    assert.expect(1);
+    assert.ok(true, 'components/validated-input.js should pass ESLint\n\n');
+  });
+
+  QUnit.test('controllers/account.js', function (assert) {
+    assert.expect(1);
+    assert.ok(true, 'controllers/account.js should pass ESLint\n\n');
   });
 
   QUnit.test('controllers/application.js', function (assert) {
@@ -158,7 +271,12 @@ define('lend-database/tests/lint/app.lint-test', [], function () {
 
   QUnit.test('controllers/register.js', function (assert) {
     assert.expect(1);
-    assert.ok(false, 'controllers/register.js should pass ESLint\n\n21:2 - Only string, number, symbol, boolean, null, undefined, and function are allowed as default properties (ember/avoid-leaking-state-in-ember-objects)\n22:2 - Only string, number, symbol, boolean, null, undefined, and function are allowed as default properties (ember/avoid-leaking-state-in-ember-objects)\n23:2 - Only string, number, symbol, boolean, null, undefined, and function are allowed as default properties (ember/avoid-leaking-state-in-ember-objects)\n46:22 - Unnecessary escape character: \\[. (no-useless-escape)\n46:47 - Unnecessary escape character: \\[. (no-useless-escape)');
+    assert.ok(true, 'controllers/register.js should pass ESLint\n\n');
+  });
+
+  QUnit.test('controllers/register2.js', function (assert) {
+    assert.expect(1);
+    assert.ok(true, 'controllers/register2.js should pass ESLint\n\n');
   });
 
   QUnit.test('controllers/return/index.js', function (assert) {
@@ -174,6 +292,16 @@ define('lend-database/tests/lint/app.lint-test', [], function () {
   QUnit.test('controllers/system.js', function (assert) {
     assert.expect(1);
     assert.ok(true, 'controllers/system.js should pass ESLint\n\n');
+  });
+
+  QUnit.test('helpers/one-word.js', function (assert) {
+    assert.expect(1);
+    assert.ok(false, 'helpers/one-word.js should pass ESLint\n\n3:34 - \'rest\' is defined but never used. (no-unused-vars)');
+  });
+
+  QUnit.test('helpers/range.js', function (assert) {
+    assert.expect(1);
+    assert.ok(true, 'helpers/range.js should pass ESLint\n\n');
   });
 
   QUnit.test('initializers/auth-manager.js', function (assert) {
@@ -236,6 +364,11 @@ define('lend-database/tests/lint/app.lint-test', [], function () {
     assert.ok(true, 'routes/about.js should pass ESLint\n\n');
   });
 
+  QUnit.test('routes/account.js', function (assert) {
+    assert.expect(1);
+    assert.ok(true, 'routes/account.js should pass ESLint\n\n');
+  });
+
   QUnit.test('routes/cart.js', function (assert) {
     assert.expect(1);
     assert.ok(true, 'routes/cart.js should pass ESLint\n\n');
@@ -291,6 +424,11 @@ define('lend-database/tests/lint/app.lint-test', [], function () {
     assert.ok(true, 'routes/register.js should pass ESLint\n\n');
   });
 
+  QUnit.test('routes/register2.js', function (assert) {
+    assert.expect(1);
+    assert.ok(true, 'routes/register2.js should pass ESLint\n\n');
+  });
+
   QUnit.test('routes/return/index.js', function (assert) {
     assert.expect(1);
     assert.ok(true, 'routes/return/index.js should pass ESLint\n\n');
@@ -311,11 +449,6 @@ define('lend-database/tests/lint/app.lint-test', [], function () {
     assert.ok(true, 'services/auth-manager.js should pass ESLint\n\n');
   });
 
-  QUnit.test('services/constants.js', function (assert) {
-    assert.expect(1);
-    assert.ok(false, 'services/constants.js should pass ESLint\n\n32:2 - Only string, number, symbol, boolean, null, undefined, and function are allowed as default properties (ember/avoid-leaking-state-in-ember-objects)\n33:2 - Only string, number, symbol, boolean, null, undefined, and function are allowed as default properties (ember/avoid-leaking-state-in-ember-objects)\n34:2 - Only string, number, symbol, boolean, null, undefined, and function are allowed as default properties (ember/avoid-leaking-state-in-ember-objects)');
-  });
-
   QUnit.test('services/navigation.js', function (assert) {
     assert.expect(1);
     assert.ok(true, 'services/navigation.js should pass ESLint\n\n');
@@ -324,11 +457,6 @@ define('lend-database/tests/lint/app.lint-test', [], function () {
   QUnit.test('services/shopping-cart.js', function (assert) {
     assert.expect(1);
     assert.ok(true, 'services/shopping-cart.js should pass ESLint\n\n');
-  });
-
-  QUnit.test('storages/cart.js', function (assert) {
-    assert.expect(1);
-    assert.ok(true, 'storages/cart.js should pass ESLint\n\n');
   });
 
   QUnit.test('transitions.js', function (assert) {
@@ -346,6 +474,11 @@ define('lend-database/tests/lint/templates.template.lint-test', [], function () 
     assert.ok(false, 'lend-database/templates/about.hbs should pass TemplateLint.\n\nlend-database/templates/about.hbs\n  9:20  error  elements cannot have inline styles  no-inline-styles\n');
   });
 
+  QUnit.test('lend-database/templates/account.hbs', function (assert) {
+    assert.expect(1);
+    assert.ok(false, 'lend-database/templates/account.hbs should pass TemplateLint.\n\nlend-database/templates/account.hbs\n  11:64  error  elements cannot have inline styles  no-inline-styles\n  40:56  error  elements cannot have inline styles  no-inline-styles\n  48:16  error  elements cannot have inline styles  no-inline-styles\n  50:16  error  elements cannot have inline styles  no-inline-styles\n  59:57  error  elements cannot have inline styles  no-inline-styles\n  59:163  error  elements cannot have inline styles  no-inline-styles\n  59:228  error  elements cannot have inline styles  no-inline-styles\n  60:57  error  elements cannot have inline styles  no-inline-styles\n  60:142  error  elements cannot have inline styles  no-inline-styles\n  60:207  error  elements cannot have inline styles  no-inline-styles\n  63:67  error  elements cannot have inline styles  no-inline-styles\n');
+  });
+
   QUnit.test('lend-database/templates/application.hbs', function (assert) {
     assert.expect(1);
     assert.ok(true, 'lend-database/templates/application.hbs should pass TemplateLint.\n\n');
@@ -353,12 +486,12 @@ define('lend-database/tests/lint/templates.template.lint-test', [], function () 
 
   QUnit.test('lend-database/templates/cart.hbs', function (assert) {
     assert.expect(1);
-    assert.ok(false, 'lend-database/templates/cart.hbs should pass TemplateLint.\n\nlend-database/templates/cart.hbs\n  43:10  error  elements cannot have inline styles  no-inline-styles\n');
+    assert.ok(false, 'lend-database/templates/cart.hbs should pass TemplateLint.\n\nlend-database/templates/cart.hbs\n  24:141  error  elements cannot have inline styles  no-inline-styles\n  39:10  error  elements cannot have inline styles  no-inline-styles\n  55:8  error  \'footer\' is defined but never used  no-unused-block-params\n');
   });
 
   QUnit.test('lend-database/templates/checkout.hbs', function (assert) {
     assert.expect(1);
-    assert.ok(false, 'lend-database/templates/checkout.hbs should pass TemplateLint.\n\nlend-database/templates/checkout.hbs\n  70:42  error  elements cannot have inline styles  no-inline-styles\n  71:39  error  elements cannot have inline styles  no-inline-styles\n  77:108  error  elements cannot have inline styles  no-inline-styles\n  84:58  error  elements cannot have inline styles  no-inline-styles\n');
+    assert.ok(false, 'lend-database/templates/checkout.hbs should pass TemplateLint.\n\nlend-database/templates/checkout.hbs\n  20:64  error  elements cannot have inline styles  no-inline-styles\n  27:62  error  elements cannot have inline styles  no-inline-styles\n  112:42  error  elements cannot have inline styles  no-inline-styles\n  113:39  error  elements cannot have inline styles  no-inline-styles\n  119:121  error  elements cannot have inline styles  no-inline-styles\n  126:58  error  elements cannot have inline styles  no-inline-styles\n');
   });
 
   QUnit.test('lend-database/templates/components/list-pagination.hbs', function (assert) {
@@ -366,24 +499,34 @@ define('lend-database/tests/lint/templates.template.lint-test', [], function () 
     assert.ok(false, 'lend-database/templates/components/list-pagination.hbs should pass TemplateLint.\n\nlend-database/templates/components/list-pagination.hbs\n  2:24  error  elements cannot have inline styles  no-inline-styles\n  3:73  error  elements cannot have inline styles  no-inline-styles\n');
   });
 
+  QUnit.test('lend-database/templates/components/n-times.hbs', function (assert) {
+    assert.expect(1);
+    assert.ok(true, 'lend-database/templates/components/n-times.hbs should pass TemplateLint.\n\n');
+  });
+
+  QUnit.test('lend-database/templates/components/validated-input.hbs', function (assert) {
+    assert.expect(1);
+    assert.ok(false, 'lend-database/templates/components/validated-input.hbs should pass TemplateLint.\n\nlend-database/templates/components/validated-input.hbs\n  3:37  error  elements cannot have inline styles  no-inline-styles\n  4:37  error  elements cannot have inline styles  no-inline-styles\n');
+  });
+
   QUnit.test('lend-database/templates/dashboard.hbs', function (assert) {
     assert.expect(1);
-    assert.ok(false, 'lend-database/templates/dashboard.hbs should pass TemplateLint.\n\nlend-database/templates/dashboard.hbs\n  16:59  error  elements cannot have inline styles  no-inline-styles\n  29:59  error  elements cannot have inline styles  no-inline-styles\n  42:59  error  elements cannot have inline styles  no-inline-styles\n');
+    assert.ok(false, 'lend-database/templates/dashboard.hbs should pass TemplateLint.\n\nlend-database/templates/dashboard.hbs\n  22:59  error  elements cannot have inline styles  no-inline-styles\n  35:59  error  elements cannot have inline styles  no-inline-styles\n  48:59  error  elements cannot have inline styles  no-inline-styles\n');
   });
 
   QUnit.test('lend-database/templates/fulfill/fulfill-order.hbs', function (assert) {
     assert.expect(1);
-    assert.ok(false, 'lend-database/templates/fulfill/fulfill-order.hbs should pass TemplateLint.\n\nlend-database/templates/fulfill/fulfill-order.hbs\n  7:19  error  elements cannot have inline styles  no-inline-styles\n  10:64  error  elements cannot have inline styles  no-inline-styles\n  16:42  error  elements cannot have inline styles  no-inline-styles\n  17:39  error  elements cannot have inline styles  no-inline-styles\n  23:117  error  elements cannot have inline styles  no-inline-styles\n  26:23  error  elements cannot have inline styles  no-inline-styles\n  26:69  error  Interaction added to non-interactive element  no-invalid-interactive\n');
+    assert.ok(false, 'lend-database/templates/fulfill/fulfill-order.hbs should pass TemplateLint.\n\nlend-database/templates/fulfill/fulfill-order.hbs\n  7:19  error  elements cannot have inline styles  no-inline-styles\n  9:45  error  elements cannot have inline styles  no-inline-styles\n  18:64  error  elements cannot have inline styles  no-inline-styles\n  24:42  error  elements cannot have inline styles  no-inline-styles\n  25:39  error  elements cannot have inline styles  no-inline-styles\n  31:117  error  elements cannot have inline styles  no-inline-styles\n  34:23  error  elements cannot have inline styles  no-inline-styles\n  34:69  error  Interaction added to non-interactive element  no-invalid-interactive\n');
   });
 
   QUnit.test('lend-database/templates/fulfill/index.hbs', function (assert) {
     assert.expect(1);
-    assert.ok(false, 'lend-database/templates/fulfill/index.hbs should pass TemplateLint.\n\nlend-database/templates/fulfill/index.hbs\n  22:67  error  elements cannot have inline styles  no-inline-styles\n  33:24  error  elements cannot have inline styles  no-inline-styles\n');
+    assert.ok(false, 'lend-database/templates/fulfill/index.hbs should pass TemplateLint.\n\nlend-database/templates/fulfill/index.hbs\n  8:45  error  elements cannot have inline styles  no-inline-styles\n  29:67  error  elements cannot have inline styles  no-inline-styles\n  40:24  error  elements cannot have inline styles  no-inline-styles\n');
   });
 
   QUnit.test('lend-database/templates/index.hbs', function (assert) {
     assert.expect(1);
-    assert.ok(true, 'lend-database/templates/index.hbs should pass TemplateLint.\n\n');
+    assert.ok(false, 'lend-database/templates/index.hbs should pass TemplateLint.\n\nlend-database/templates/index.hbs\n  77:23  error  elements cannot have inline styles  no-inline-styles\n');
   });
 
   QUnit.test('lend-database/templates/library/index.hbs', function (assert) {
@@ -393,7 +536,7 @@ define('lend-database/tests/lint/templates.template.lint-test', [], function () 
 
   QUnit.test('lend-database/templates/library/library-items.hbs', function (assert) {
     assert.expect(1);
-    assert.ok(false, 'lend-database/templates/library/library-items.hbs should pass TemplateLint.\n\nlend-database/templates/library/library-items.hbs\n  21:12  error  HTML comment detected  no-html-comments\n  14:64  error  elements cannot have inline styles  no-inline-styles\n');
+    assert.ok(false, 'lend-database/templates/library/library-items.hbs should pass TemplateLint.\n\nlend-database/templates/library/library-items.hbs\n  27:12  error  HTML comment detected  no-html-comments\n  14:64  error  elements cannot have inline styles  no-inline-styles\n  21:62  error  elements cannot have inline styles  no-inline-styles\n');
   });
 
   QUnit.test('lend-database/templates/login.hbs', function (assert) {
@@ -403,27 +546,32 @@ define('lend-database/tests/lint/templates.template.lint-test', [], function () 
 
   QUnit.test('lend-database/templates/manage/index.hbs', function (assert) {
     assert.expect(1);
-    assert.ok(false, 'lend-database/templates/manage/index.hbs should pass TemplateLint.\n\nlend-database/templates/manage/index.hbs\n  19:57  error  elements cannot have inline styles  no-inline-styles\n  19:164  error  elements cannot have inline styles  no-inline-styles\n  19:229  error  elements cannot have inline styles  no-inline-styles\n  20:57  error  elements cannot have inline styles  no-inline-styles\n  20:143  error  elements cannot have inline styles  no-inline-styles\n  20:208  error  elements cannot have inline styles  no-inline-styles\n  23:67  error  elements cannot have inline styles  no-inline-styles\n  34:24  error  elements cannot have inline styles  no-inline-styles\n');
+    assert.ok(false, 'lend-database/templates/manage/index.hbs should pass TemplateLint.\n\nlend-database/templates/manage/index.hbs\n  8:45  error  elements cannot have inline styles  no-inline-styles\n  26:57  error  elements cannot have inline styles  no-inline-styles\n  26:163  error  elements cannot have inline styles  no-inline-styles\n  26:228  error  elements cannot have inline styles  no-inline-styles\n  27:57  error  elements cannot have inline styles  no-inline-styles\n  27:142  error  elements cannot have inline styles  no-inline-styles\n  27:207  error  elements cannot have inline styles  no-inline-styles\n  30:67  error  elements cannot have inline styles  no-inline-styles\n  41:24  error  elements cannot have inline styles  no-inline-styles\n');
   });
 
   QUnit.test('lend-database/templates/manage/manage-order.hbs', function (assert) {
     assert.expect(1);
-    assert.ok(false, 'lend-database/templates/manage/manage-order.hbs should pass TemplateLint.\n\nlend-database/templates/manage/manage-order.hbs\n  8:19  error  elements cannot have inline styles  no-inline-styles\n  8:130  error  elements cannot have inline styles  no-inline-styles\n  8:195  error  elements cannot have inline styles  no-inline-styles\n  9:19  error  elements cannot have inline styles  no-inline-styles\n  9:109  error  elements cannot have inline styles  no-inline-styles\n  9:174  error  elements cannot have inline styles  no-inline-styles\n  181:62  error  elements cannot have inline styles  no-inline-styles\n');
+    assert.ok(false, 'lend-database/templates/manage/manage-order.hbs should pass TemplateLint.\n\nlend-database/templates/manage/manage-order.hbs\n  8:19  error  elements cannot have inline styles  no-inline-styles\n  8:130  error  elements cannot have inline styles  no-inline-styles\n  8:194  error  elements cannot have inline styles  no-inline-styles\n  9:19  error  elements cannot have inline styles  no-inline-styles\n  9:109  error  elements cannot have inline styles  no-inline-styles\n  9:174  error  elements cannot have inline styles  no-inline-styles\n  11:45  error  elements cannot have inline styles  no-inline-styles\n  133:62  error  elements cannot have inline styles  no-inline-styles\n');
   });
 
   QUnit.test('lend-database/templates/register.hbs', function (assert) {
     assert.expect(1);
-    assert.ok(false, 'lend-database/templates/register.hbs should pass TemplateLint.\n\nlend-database/templates/register.hbs\n  8:11  error  elements cannot have inline styles  no-inline-styles\n  12:14  error  elements cannot have inline styles  no-inline-styles\n  53:14  error  elements cannot have inline styles  no-inline-styles\n  107:14  error  elements cannot have inline styles  no-inline-styles\n');
+    assert.ok(false, 'lend-database/templates/register.hbs should pass TemplateLint.\n\nlend-database/templates/register.hbs\n  7:11  error  elements cannot have inline styles  no-inline-styles\n  11:14  error  elements cannot have inline styles  no-inline-styles\n  29:14  error  elements cannot have inline styles  no-inline-styles\n  50:14  error  elements cannot have inline styles  no-inline-styles\n');
+  });
+
+  QUnit.test('lend-database/templates/register2.hbs', function (assert) {
+    assert.expect(1);
+    assert.ok(false, 'lend-database/templates/register2.hbs should pass TemplateLint.\n\nlend-database/templates/register2.hbs\n  8:11  error  elements cannot have inline styles  no-inline-styles\n  12:14  error  elements cannot have inline styles  no-inline-styles\n  53:14  error  elements cannot have inline styles  no-inline-styles\n  94:14  error  elements cannot have inline styles  no-inline-styles\n');
   });
 
   QUnit.test('lend-database/templates/return/index.hbs', function (assert) {
     assert.expect(1);
-    assert.ok(false, 'lend-database/templates/return/index.hbs should pass TemplateLint.\n\nlend-database/templates/return/index.hbs\n  22:67  error  elements cannot have inline styles  no-inline-styles\n  33:24  error  elements cannot have inline styles  no-inline-styles\n');
+    assert.ok(false, 'lend-database/templates/return/index.hbs should pass TemplateLint.\n\nlend-database/templates/return/index.hbs\n  9:45  error  elements cannot have inline styles  no-inline-styles\n  29:67  error  elements cannot have inline styles  no-inline-styles\n  40:24  error  elements cannot have inline styles  no-inline-styles\n');
   });
 
   QUnit.test('lend-database/templates/return/return-items.hbs', function (assert) {
     assert.expect(1);
-    assert.ok(false, 'lend-database/templates/return/return-items.hbs should pass TemplateLint.\n\nlend-database/templates/return/return-items.hbs\n  8:19  error  elements cannot have inline styles  no-inline-styles\n  8:113  error  elements cannot have inline styles  no-inline-styles\n  8:237  error  elements cannot have inline styles  no-inline-styles\n  13:42  error  elements cannot have inline styles  no-inline-styles\n  14:39  error  elements cannot have inline styles  no-inline-styles\n');
+    assert.ok(false, 'lend-database/templates/return/return-items.hbs should pass TemplateLint.\n\nlend-database/templates/return/return-items.hbs\n  8:19  error  elements cannot have inline styles  no-inline-styles\n  8:113  error  elements cannot have inline styles  no-inline-styles\n  8:237  error  elements cannot have inline styles  no-inline-styles\n  10:45  error  elements cannot have inline styles  no-inline-styles\n  21:42  error  elements cannot have inline styles  no-inline-styles\n  22:39  error  elements cannot have inline styles  no-inline-styles\n  42:133  error  elements cannot have inline styles  no-inline-styles\n');
   });
 
   QUnit.test('lend-database/templates/tasks.hbs', function (assert) {
@@ -441,6 +589,26 @@ define('lend-database/tests/lint/tests.lint-test', [], function () {
     assert.ok(true, 'integration/components/list-pagination-test.js should pass ESLint\n\n');
   });
 
+  QUnit.test('integration/components/n-times-test.js', function (assert) {
+    assert.expect(1);
+    assert.ok(true, 'integration/components/n-times-test.js should pass ESLint\n\n');
+  });
+
+  QUnit.test('integration/components/validated-input-test.js', function (assert) {
+    assert.expect(1);
+    assert.ok(true, 'integration/components/validated-input-test.js should pass ESLint\n\n');
+  });
+
+  QUnit.test('integration/helpers/one-word-test.js', function (assert) {
+    assert.expect(1);
+    assert.ok(true, 'integration/helpers/one-word-test.js should pass ESLint\n\n');
+  });
+
+  QUnit.test('integration/helpers/range-test.js', function (assert) {
+    assert.expect(1);
+    assert.ok(true, 'integration/helpers/range-test.js should pass ESLint\n\n');
+  });
+
   QUnit.test('test-helper.js', function (assert) {
     assert.expect(1);
     assert.ok(true, 'test-helper.js should pass ESLint\n\n');
@@ -449,6 +617,11 @@ define('lend-database/tests/lint/tests.lint-test', [], function () {
   QUnit.test('unit/adapters/application-test.js', function (assert) {
     assert.expect(1);
     assert.ok(true, 'unit/adapters/application-test.js should pass ESLint\n\n');
+  });
+
+  QUnit.test('unit/controllers/account-test.js', function (assert) {
+    assert.expect(1);
+    assert.ok(true, 'unit/controllers/account-test.js should pass ESLint\n\n');
   });
 
   QUnit.test('unit/controllers/application-test.js', function (assert) {
@@ -521,6 +694,11 @@ define('lend-database/tests/lint/tests.lint-test', [], function () {
     assert.ok(true, 'unit/controllers/register-test.js should pass ESLint\n\n');
   });
 
+  QUnit.test('unit/controllers/register2-test.js', function (assert) {
+    assert.expect(1);
+    assert.ok(true, 'unit/controllers/register2-test.js should pass ESLint\n\n');
+  });
+
   QUnit.test('unit/controllers/return-test.js', function (assert) {
     assert.expect(1);
     assert.ok(true, 'unit/controllers/return-test.js should pass ESLint\n\n');
@@ -564,11 +742,6 @@ define('lend-database/tests/lint/tests.lint-test', [], function () {
   QUnit.test('unit/models/award-test.js', function (assert) {
     assert.expect(1);
     assert.ok(true, 'unit/models/award-test.js should pass ESLint\n\n');
-  });
-
-  QUnit.test('unit/models/cart-test.js', function (assert) {
-    assert.expect(1);
-    assert.ok(true, 'unit/models/cart-test.js should pass ESLint\n\n');
   });
 
   QUnit.test('unit/models/category-test.js', function (assert) {
@@ -619,6 +792,11 @@ define('lend-database/tests/lint/tests.lint-test', [], function () {
   QUnit.test('unit/routes/about-test.js', function (assert) {
     assert.expect(1);
     assert.ok(true, 'unit/routes/about-test.js should pass ESLint\n\n');
+  });
+
+  QUnit.test('unit/routes/account-test.js', function (assert) {
+    assert.expect(1);
+    assert.ok(true, 'unit/routes/account-test.js should pass ESLint\n\n');
   });
 
   QUnit.test('unit/routes/cart-test.js', function (assert) {
@@ -681,6 +859,11 @@ define('lend-database/tests/lint/tests.lint-test', [], function () {
     assert.ok(true, 'unit/routes/register-test.js should pass ESLint\n\n');
   });
 
+  QUnit.test('unit/routes/register2-test.js', function (assert) {
+    assert.expect(1);
+    assert.ok(true, 'unit/routes/register2-test.js should pass ESLint\n\n');
+  });
+
   QUnit.test('unit/routes/return-test.js', function (assert) {
     assert.expect(1);
     assert.ok(true, 'unit/routes/return-test.js should pass ESLint\n\n');
@@ -733,6 +916,19 @@ define('lend-database/tests/unit/adapters/application-test', ['qunit', 'ember-qu
     (0, _qunit.test)('it exists', function (assert) {
       let adapter = this.owner.lookup('adapter:application');
       assert.ok(adapter);
+    });
+  });
+});
+define('lend-database/tests/unit/controllers/account-test', ['qunit', 'ember-qunit'], function (_qunit, _emberQunit) {
+  'use strict';
+
+  (0, _qunit.module)('Unit | Controller | account', function (hooks) {
+    (0, _emberQunit.setupTest)(hooks);
+
+    // Replace this with your real tests.
+    (0, _qunit.test)('it exists', function (assert) {
+      let controller = this.owner.lookup('controller:account');
+      assert.ok(controller);
     });
   });
 });
@@ -918,6 +1114,19 @@ define('lend-database/tests/unit/controllers/register-test', ['qunit', 'ember-qu
     });
   });
 });
+define('lend-database/tests/unit/controllers/register2-test', ['qunit', 'ember-qunit'], function (_qunit, _emberQunit) {
+  'use strict';
+
+  (0, _qunit.module)('Unit | Controller | register2', function (hooks) {
+    (0, _emberQunit.setupTest)(hooks);
+
+    // Replace this with your real tests.
+    (0, _qunit.test)('it exists', function (assert) {
+      let controller = this.owner.lookup('controller:register2');
+      assert.ok(controller);
+    });
+  });
+});
 define('lend-database/tests/unit/controllers/return-test', ['qunit', 'ember-qunit'], function (_qunit, _emberQunit) {
   'use strict';
 
@@ -1082,20 +1291,6 @@ define('lend-database/tests/unit/models/award-test', ['qunit', 'ember-qunit'], f
     });
   });
 });
-define('lend-database/tests/unit/models/cart-test', ['qunit', 'ember-qunit'], function (_qunit, _emberQunit) {
-  'use strict';
-
-  (0, _qunit.module)('Unit | Model | cart', function (hooks) {
-    (0, _emberQunit.setupTest)(hooks);
-
-    // Replace this with your real tests.
-    (0, _qunit.test)('it exists', function (assert) {
-      let store = this.owner.lookup('service:store');
-      let model = store.createRecord('cart', {});
-      assert.ok(model);
-    });
-  });
-});
 define('lend-database/tests/unit/models/category-test', ['qunit', 'ember-qunit'], function (_qunit, _emberQunit) {
   'use strict';
 
@@ -1230,6 +1425,18 @@ define('lend-database/tests/unit/routes/about-test', ['qunit', 'ember-qunit'], f
 
     (0, _qunit.test)('it exists', function (assert) {
       let route = this.owner.lookup('route:about');
+      assert.ok(route);
+    });
+  });
+});
+define('lend-database/tests/unit/routes/account-test', ['qunit', 'ember-qunit'], function (_qunit, _emberQunit) {
+  'use strict';
+
+  (0, _qunit.module)('Unit | Route | account', function (hooks) {
+    (0, _emberQunit.setupTest)(hooks);
+
+    (0, _qunit.test)('it exists', function (assert) {
+      let route = this.owner.lookup('route:account');
       assert.ok(route);
     });
   });
@@ -1374,6 +1581,18 @@ define('lend-database/tests/unit/routes/register-test', ['qunit', 'ember-qunit']
 
     (0, _qunit.test)('it exists', function (assert) {
       let route = this.owner.lookup('route:register');
+      assert.ok(route);
+    });
+  });
+});
+define('lend-database/tests/unit/routes/register2-test', ['qunit', 'ember-qunit'], function (_qunit, _emberQunit) {
+  'use strict';
+
+  (0, _qunit.module)('Unit | Route | register2', function (hooks) {
+    (0, _emberQunit.setupTest)(hooks);
+
+    (0, _qunit.test)('it exists', function (assert) {
+      let route = this.owner.lookup('route:register2');
       assert.ok(route);
     });
   });

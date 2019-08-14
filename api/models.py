@@ -14,30 +14,11 @@ from rest_framework_json_api import serializers
 from django.core.validators import *
 
 
-class Checkout(models.Model):
-    # REGEX for phone number validation
-    phone_regex = RegexValidator(
-        regex=r'^\+?1?\d{9,15}$', message="Phone number must be entered in the format: '+999999999'. Up to 15 digits allowed.")
-
-    firstname = models.CharField(max_length=1000, blank=False)
-    lastname = models.CharField(max_length=1000, blank=False)
-    address = models.CharField(max_length=254, blank=False)
-    phonenumber = models.CharField(
-        validators=[phone_regex], max_length=17, blank=False)
-    numberofstudents = models.IntegerField(
-        validators=[MinValueValidator(0), MaxValueValidator(99)], blank=False)
-    createdon = models.DateTimeField(null=True, blank=True)
-    fulfilledon = models.DateTimeField(null=True, blank=True)
-    returnedon = models.DateTimeField(null=True, blank=True)
-    missingparts = models.TextField(max_length=1000, blank=True)
-
-    def __str__(self):
-        return str(self.lastname) + ', ' + str(self.firstname)
-
-    class JSONAPIMeta:
-        resource_name = "checkouts"
 
 class Profile(models.Model):
+    # REGEX for phone number validation
+    phone_regex = RegexValidator(regex=r'^\+?1?\d{9,15}$', message="Phone number must be entered in the format: '+999999999'. Up to 15 digits allowed.")
+        
     UNL = 'unl'
     UNO = 'uno'
     UNMC = 'unmc'
@@ -52,6 +33,8 @@ class Profile(models.Model):
     )
 
     user = models.OneToOneField(User, on_delete=models.CASCADE)
+    phonenumber = models.CharField(validators=[phone_regex], max_length=17, blank=False)
+    address = models.CharField(max_length=254, blank=False)
     org = models.CharField(max_length=30, choices=ORG_CHOICES, default=UNO)
     college = models.CharField(max_length=1000, blank=True)
     dept = models.CharField(max_length=1000, blank=True)
@@ -59,6 +42,35 @@ class Profile(models.Model):
 
     def __str__(self):
         return str(self.user.username)
+    
+    class JSONAPIMeta:
+        resource_name = "profiles"
+
+
+class Checkout(models.Model):
+    # REGEX for phone number validation
+    phone_regex = RegexValidator(
+        regex=r'^\+?1?\d{9,15}$', message="Phone number must be entered in the format: '+999999999'. Up to 15 digits allowed.")
+
+    firstname = models.CharField(max_length=1000, blank=False)
+    lastname = models.CharField(max_length=1000, blank=False)
+    address = models.CharField(max_length=254, blank=False)
+    email = models.CharField(max_length=100, blank=False, default="test@test.com")
+    phonenumber = models.CharField(validators=[phone_regex], max_length=17, blank=False)
+    numberofstudents = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(99)], blank=False)
+
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='checkouts', null=True, blank=True)
+
+    createdon = models.DateTimeField(null=True, blank=True)
+    fulfilledon = models.DateTimeField(null=True, blank=True)
+    returnedon = models.DateTimeField(null=True, blank=True)
+    missingparts = models.TextField(max_length=1000, blank=True)
+
+    def __str__(self):
+        return str(self.lastname) + ', ' + str(self.firstname)
+
+    class JSONAPIMeta:
+        resource_name = "checkouts"
 
 
 class Category(models.Model):
@@ -124,6 +136,19 @@ class UserSerializer(serializers.ModelSerializer):
                   'firstname', 'email', 'issuperuser')
 
 
+class ProfileSerializer(serializers.ModelSerializer):
+    included_serializers = {
+        'user': UserSerializer
+        # 'areasofinterest': AreaofinterestSerializer
+    }
+
+    class Meta:
+        model = Profile
+        fields = ('id', 'address', 'phonenumber', 'org', 'college', 'dept', 'otherdetails', 'user')
+
+    class JSONAPIMeta:
+        included_resources = ['user']
+
 class InternalItemSerializer(serializers.ModelSerializer):
     #owner = UserSerializer(read_only = True)
     #checkedoutto = CheckoutSerializer(read_only = True)
@@ -144,7 +169,7 @@ class CheckoutSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Checkout
-        fields = ('id', 'items', 'firstname', 'lastname', 'address', 'phonenumber',
+        fields = ('id', 'items', 'firstname', 'lastname', 'address', 'email', 'profile', 'phonenumber',
                   'numberofstudents', 'createdon', 'fulfilledon', 'returnedon', 'missingparts')
 
     class JSONAPIMeta:
@@ -185,15 +210,3 @@ class CategorySerializer(serializers.ModelSerializer):
 
 
 
-class ProfileSerializer(serializers.ModelSerializer):
-    included_serializers = {
-        'user': UserSerializer
-        # 'areasofinterest': AreaofinterestSerializer
-    }
-
-    class Meta:
-        model = Profile
-        fields = ('id', 'org', 'college', 'dept', 'otherdetails', 'user')
-
-    class JSONAPIMeta:
-        included_resources = ['user']

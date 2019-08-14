@@ -11430,14 +11430,6 @@ define('ember-cli-test-loader/test-support/index', ['exports'], function (export
   }exports.default = TestLoader;
   ;
 });
-define('ember-local-storage/test-support/reset-storage', ['exports', 'ember-local-storage/helpers/storage'], function (exports, _storage) {
-  'use strict';
-
-  Object.defineProperty(exports, "__esModule", {
-    value: true
-  });
-  exports.default = _storage._resetStorages;
-});
 define('ember-macro-helpers/test-support/compute', ['exports'], function (exports) {
   'use strict';
 
