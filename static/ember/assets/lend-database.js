@@ -1167,6 +1167,7 @@
         validation: null,
         showValidations: false,
         didValidate: false,
+        disabled: false,
 
         notValidating: Ember.computed.not('validation.isValidating').readOnly(),
         hasContent: Ember.computed.notEmpty('value').readOnly(),
@@ -1243,10 +1244,6 @@
 
         init: function () {
             this._super(...arguments);
-
-            if (!this.get('auth').get('isLoggedIn')) {
-                this.transitionToRoute('login');
-            }
         },
         actions: {
             logout() {
@@ -1255,26 +1252,52 @@
 
             save() {
                 var controller = this;
-                controller.get('model').validate().then(({ validations }) => {
-                    controller.set('didValidate', true);
-                    if (validations.get('isValid')) {
-
-                        console.log("Saving information for " + controller.get('first') + " " + controller.get('last'));
-
-                        controller.get('model').save();
-
-                        controller.setProperties({
-                            showAlert: false,
-                            isRegistered: true
-                        });
-
-                        Ember.$("#success-alert").fadeTo(5000, 500).slideDown(500, function () {
-                            Ember.$("#success-alert").slideUp(500);
-                        });
-                    } else {
-                        controller.set('showAlert', true);
+                controller.get('model.user').validate().then(({ validations }) => {
+                    console.log(validations);
+                    if (validations.get('errors').get('length') == 1 && validations.get('error').get('message') == "Password can't be blank") {
+                        console.log('Saved the user model');
+                        controller.get('model.user').save();
                     }
                 });
+
+                controller.get('model.profile').validate().then(({ validations }) => {
+                    console.log(validations);
+                    if (validations.get('isValid')) {
+                        console.log('Saved the user profile');
+                        controller.get('model.profile').save();
+                    }
+                });
+
+                // controller.get('model.profile').validate().then(({ validations }) => {
+                //     console.log(validations);
+                //     if (validations.get('isValid')) {
+                //         controller.get('model.user').validate().then(({ validations_user }) => {
+                //             controller.set('didValidate', true);
+                //             if (validations_user.get('errors')) {
+
+                console.log("Saving information for " + controller.get('first') + " " + controller.get('last'));
+
+                controller.get('model.user').save();
+                controller.get('model.profile').save();
+
+                controller.setProperties({
+                    showAlert: false,
+                    isRegistered: true
+                });
+
+                Ember.$("#success-alert").fadeTo(5000, 500).slideDown(500, function () {
+                    Ember.$("#success-alert").slideUp(500);
+                });
+                //             } else {
+                //                 console.log(validations_user);
+                //                 controller.set('showAlert', true);
+                //             }
+                //         });
+                //     } else {
+                //         console.log(validations_profile);
+                //         controller.set('showAlert', true);
+                //     }
+                // });
             }
         }
     });
@@ -1328,7 +1351,7 @@
         }
     });
 });
-;define('lend-database/controllers/checkout', ['exports'], function (exports) {
+;define('lend-database/controllers/checkout-backup', ['exports'], function (exports) {
     'use strict';
 
     Object.defineProperty(exports, "__esModule", {
@@ -1349,7 +1372,8 @@
         },
 
         actions: {
-            checkout() {
+            checkout() {},
+            checkoutBackup() {
                 let controller = this;
                 let first = Ember.$('#first').val();
                 let last = Ember.$('#last').val();
@@ -1415,6 +1439,88 @@
                         Ember.$("#success-alert").slideUp(500);
                     });
                 }
+            },
+
+            hideSuccess() {
+                Ember.$("#success-alert").hide();
+            },
+
+            hideDanger() {
+                Ember.$("#danger-alert").hide();
+            }
+        }
+    });
+});
+;define('lend-database/controllers/checkout', ['exports'], function (exports) {
+    'use strict';
+
+    Object.defineProperty(exports, "__esModule", {
+        value: true
+    });
+    exports.default = Ember.Controller.extend({
+        errorMsg: false,
+        cart: Ember.inject.service('shopping-cart'),
+        auth: Ember.inject.service('auth-manager'),
+
+        init: function () {
+            this._super(...arguments);
+
+            if (!this.cart.cart.length) {
+                this.transitionToRoute('cart');
+            }
+        },
+
+        actions: {
+            checkout() {
+                let controller = this;
+                let newCheckout = controller.get('model.newCheckout');
+
+                newCheckout.validate().then(({ validations }) => {
+                    controller.set('didValidate', true);
+                    if (validations.get('isValid')) {
+
+                        if (controller.get('auth').get('isLoggedIn')) {
+                            newCheckout.set('profile', controller.get('auth').get('profile'));
+                            console.log('Attached profile to checkout.');
+                        }
+
+                        newCheckout.set('createdon', new Date());
+
+                        newCheckout.save().then(function () {
+                            controller.get('cart').get('cart').forEach(cartitem => {
+                                // for(var i = 0; i < cartitem.get('quantity'); i++){
+                                controller.store.query('item', { 'checkedoutby': null, 'itemtype.partname': cartitem.itemtype.partname }).then(function (item) {
+                                    console.log("---------------------");
+                                    console.log("Item:");
+                                    console.log(item);
+                                    console.log("---------------------");
+                                    console.log("Item Owner:");
+                                    console.log(item.get('owner'));
+                                    console.log("---------------------");
+                                    let selectedItem = item;
+                                    console.log("Pre-assignment:");
+                                    console.log(selectedItem.get('checkedoutto'));
+                                    console.log("---------------------");
+                                    selectedItem.set('checkedoutto', newCheckout);
+                                    console.log("Post-assignment:");
+                                    console.log(selectedItem.get('checkedoutto'));
+                                    console.log("---------------------");
+                                    console.log("Checkout ID:");
+                                    console.log(newCheckout.get('id'));
+                                    console.log("---------------------");
+                                    selectedItem.save();
+                                });
+                                // }
+                            });
+                        });
+
+                        // this.cart.empty();
+
+                        Ember.$("#success-alert").fadeTo(5000, 500).slideDown(500, function () {
+                            Ember.$("#success-alert").slideUp(500);
+                        });
+                    }
+                });
             },
 
             hideSuccess() {
@@ -1696,77 +1802,82 @@
   exports.default = Ember.Controller.extend({});
 });
 ;define('lend-database/controllers/register', ['exports'], function (exports) {
-    'use strict';
+  'use strict';
 
-    Object.defineProperty(exports, "__esModule", {
-        value: true
-    });
-    exports.default = Ember.Controller.extend({
-        auth: Ember.inject.service('auth-manager'),
-        showAlert: false,
-        isRegistered: false,
-        didValidate: false,
+  Object.defineProperty(exports, "__esModule", {
+    value: true
+  });
+  exports.default = Ember.Controller.extend({
+    auth: Ember.inject.service('auth-manager'),
+    showAlert: false,
+    isRegistered: false,
+    didValidate: false,
+    validationErrorMsg: '',
+    actions: {
+      register() {
+        var controller = this;
+        controller.get('model').validate().then(({ validations }) => {
+          controller.set('didValidate', true);
+          if (validations.get('isValid')) {
 
-        actions: {
-            register() {
-                var controller = this;
-                controller.get('model').validate().then(({ validations }) => {
-                    controller.set('didValidate', true);
-                    if (validations.get('isValid')) {
+            console.log("Registering " + controller.get('first') + " " + controller.get('last') + " as: " + controller.get('username'));
 
-                        console.log("Registering " + controller.get('first') + " " + controller.get('last') + " as: " + controller.get('username'));
+            var requestdata = {
+              'username': controller.get('username'),
+              'password': controller.get('password'),
+              'email': controller.get('email'),
+              'firstname': controller.get('first'),
+              'lastname': controller.get('last'),
+              'address': controller.get('address'),
+              'phone': controller.get('phone')
+            };
 
-                        var requestdata = {
-                            'username': controller.get('username'),
-                            'password': controller.get('password'),
-                            'email': controller.get('email'),
-                            'firstname': controller.get('first'),
-                            'lastname': controller.get('last'),
-                            'address': controller.get('address'),
-                            'phone': controller.get('phone')
-                        };
+            Ember.$.post('../api/register/', requestdata, function (response) {
+              var errMsg = '';
+              if (response.data.status === "error") {
 
-                        Ember.$.post('../api/register/', requestdata, function (response) {
-                            var errMsg = '';
-                            if (response.data.status === "error") {
+                if (response.data.username) {
+                  errMsg = response.data.username;
+                } else if (response.data.email) {
+                  errMsg = response.data.email;
+                } else {
+                  errMsg = "An unknown error occured. Please try again";
+                }
 
-                                if (response.data.username) {
-                                    errMsg = response.data.username;
-                                } else if (response.data.email) {
-                                    errMsg = response.data.email;
-                                } else {
-                                    errMsg = "An unknown error occured. Please try again";
-                                }
-
-                                controller.set('validationErrorMsg', errMsg);
-                                controller.setProperties({
-                                    showAlert: true,
-                                    isRegistered: false
-                                });
-                            } else {
-
-                                controller.get('auth').set('username', controller.get('username'));
-                                controller.get('auth').set('password', controller.get('password'));
-
-                                controller.setProperties({
-                                    showAlert: false,
-                                    isRegistered: true
-                                });
-
-                                controller.transitionToRoute('login');
-                            }
-                        });
-                    } else {
-                        controller.set('showAlert', true);
-                    }
+                controller.set('validationErrorMsg', errMsg);
+                console.log(errMsg);
+                controller.setProperties({
+                  showAlert: true,
+                  isRegistered: false
                 });
-            },
+              } else {
 
-            toggleProperty(p) {
-                this.toggleProperty(p);
-            }
-        }
-    });
+                controller.get('auth').set('username', controller.get('username'));
+                controller.get('auth').set('password', controller.get('password'));
+
+                controller.setProperties({
+                  showAlert: false,
+                  isRegistered: true
+                });
+
+                controller.transitionToRoute('login');
+              }
+            });
+          } else {
+            controller.set('showAlert', true);
+          }
+        });
+      },
+
+      toggleProperty(p) {
+        this.toggleProperty(p);
+      },
+
+      hide() {
+        this.set('showAlert', false);
+      }
+    }
+  });
 });
 ;define('lend-database/controllers/register2', ['exports'], function (exports) {
 	'use strict';
@@ -1967,6 +2078,8 @@
             if (!this.get('auth').get('isLoggedIn')) {
                 this.transitionToRoute('login');
             }
+
+            console.log(this.get('model').get('items'));
         },
 
         actions: {
@@ -2897,22 +3010,59 @@
         itemtypes: _emberData.default.hasMany('itemtype')
     });
 });
-;define('lend-database/models/checkout', ['exports', 'ember-data'], function (exports, _emberData) {
+;define('lend-database/models/checkout', ['exports', 'ember-data', 'ember-cp-validations'], function (exports, _emberData, _emberCpValidations) {
     'use strict';
 
     Object.defineProperty(exports, "__esModule", {
         value: true
     });
-    exports.default = _emberData.default.Model.extend({
+
+
+    const Validations = (0, _emberCpValidations.buildValidations)({
+        firstname: {
+            description: 'First name',
+            validators: [(0, _emberCpValidations.validator)('presence', true)]
+        },
+        lastname: {
+            description: 'Last name',
+            validators: [(0, _emberCpValidations.validator)('presence', true)]
+        },
+        email: {
+            validators: [(0, _emberCpValidations.validator)('presence', true), (0, _emberCpValidations.validator)('format', {
+                type: 'email'
+            })]
+        },
+        address: {
+            description: 'Address',
+            validators: [(0, _emberCpValidations.validator)('presence', true)]
+        },
+        phonenumber: {
+            description: 'Phone number',
+            validators: [(0, _emberCpValidations.validator)('presence', true), (0, _emberCpValidations.validator)('format', {
+                allowBlank: false,
+                type: 'phone'
+            })]
+        },
+        numberofstudents: {
+            description: 'Number of students',
+            validators: [(0, _emberCpValidations.validator)('presence', true)]
+        },
+        profile: (0, _emberCpValidations.validator)('belongs-to')
+    }, {
+        debounce: 500
+    });
+
+    exports.default = _emberData.default.Model.extend(Validations, {
         firstname: _emberData.default.attr('string'),
         lastname: _emberData.default.attr('string'),
+        email: _emberData.default.attr('string'),
         address: _emberData.default.attr('string'),
         phonenumber: _emberData.default.attr('string'),
-        numberofstudents: _emberData.default.attr(),
+        numberofstudents: _emberData.default.attr('number'),
         profile: _emberData.default.belongsTo('profile'),
-        createdon: _emberData.default.attr(),
-        fulfilledon: _emberData.default.attr(),
-        returnedon: _emberData.default.attr(),
+        createdon: _emberData.default.attr('date'),
+        fulfilledon: _emberData.default.attr('date'),
+        returnedon: _emberData.default.attr('date'),
         missingparts: _emberData.default.attr(),
         items: _emberData.default.hasMany('item')
     });
@@ -3081,25 +3231,40 @@
   exports.default = Ember.Route.extend({});
 });
 ;define('lend-database/routes/account', ['exports'], function (exports) {
-    'use strict';
+  'use strict';
 
-    Object.defineProperty(exports, "__esModule", {
-        value: true
-    });
-    exports.default = Ember.Route.extend({
-        model() {},
+  Object.defineProperty(exports, "__esModule", {
+    value: true
+  });
+  exports.default = Ember.Route.extend({
+    auth: Ember.inject.service('auth-manager'),
+    async afterModel() {
+      let route = this;
 
-        setupController(controller) {
-            controller.setProperties({
-                showAlert: false,
-                isRegistered: false,
-                showCode: false,
-                didValidate: false
-            });
+      let loggedIn = await this.get('auth').get('isLoggedIn');
+      console.log(loggedIn);
+      if (!this.get('auth').get('isLoggedIn')) {
+        route.transitionTo('login');
+      }
+    },
+    model() {
+      return Ember.RSVP.hash({
+        user: this.get('auth').get('user'),
+        profile: this.get('auth').get('profile')
+      });
+    },
 
-            this._super(...arguments);
-        }
-    });
+    setupController(controller) {
+      controller.setProperties({
+        showAlert: false,
+        isRegistered: false,
+        showCode: false,
+        didValidate: false
+      });
+
+      this._super(...arguments);
+    }
+  });
 });
 ;define('lend-database/routes/cart', ['exports'], function (exports) {
 	'use strict';
@@ -3113,14 +3278,13 @@
 		},
 		actions: {
 			willTransition: function () {
-				console.log('Going away...');
 				var appController = this.controllerFor('cart');
 				appController.set('confirm', false);
 			}
 		}
 	});
 });
-;define('lend-database/routes/checkout', ['exports'], function (exports) {
+;define('lend-database/routes/checkout-backup', ['exports'], function (exports) {
   'use strict';
 
   Object.defineProperty(exports, "__esModule", {
@@ -3130,7 +3294,8 @@
     model() {
       return Ember.RSVP.hash({
         categories: this.store.findAll('category'),
-        itemtypes: this.store.findAll('itemtype')
+        itemtypes: this.store.findAll('itemtype'),
+        newCheckout: this.store.createRecord('checkout')
       });
     },
 
@@ -3142,6 +3307,33 @@
         didValidate: false
       });
 
+      this._super(...arguments);
+    }
+  });
+});
+;define('lend-database/routes/checkout', ['exports'], function (exports) {
+  'use strict';
+
+  Object.defineProperty(exports, "__esModule", {
+    value: true
+  });
+  exports.default = Ember.Route.extend({
+    model() {
+      return Ember.RSVP.hash({
+        categories: this.store.findAll('category'),
+        itemtypes: this.store.findAll('itemtype'),
+        newCheckout: this.store.createRecord('checkout')
+      });
+    },
+
+    setupController(controller, model) {
+      controller.setProperties({
+        showAlert: false,
+        isRegistered: false,
+        showCode: false,
+        didValidate: false
+      });
+      controller.set('model', model);
       this._super(...arguments);
     }
   });
@@ -3496,6 +3688,7 @@
   });
   exports.default = Ember.Service.extend({
 
+    // { itemtype: <Itemtype>, quantity: <int>, available: <int> }
     cart: null,
 
     init() {
@@ -3518,7 +3711,7 @@
         item.set('0.quantity', parseInt(item.get('0.quantity') + 1));
       } else {
         console.log('Added ' + itemtype.get('partname') + ' to cart.');
-        this.get('cart').pushObject({ 'itemtype': itemtype, 'quantity': 1 });
+        this.get('cart').pushObject({ 'itemtype': itemtype, 'quantity': 1, available: itemtype.get('items.length') });
       }
 
       localStorage.setItem('cart', JSON.stringify(this.get('cart').toArray()));
@@ -3571,8 +3764,6 @@
 
     getQuantity(itemtype) {
       let item = this.get('cart').filterBy('itemtype.partname', itemtype.get('partname'));
-      console.log(item);
-      console.log(itemtype.partname + " quantity in cart: " + item.get("0.quantity"));
       return item.length ? item.get('0.quantity') : 0;
     },
 
@@ -3609,7 +3800,7 @@
   Object.defineProperty(exports, "__esModule", {
     value: true
   });
-  exports.default = Ember.HTMLBars.template({ "id": "uMK6LX+f", "block": "{\"symbols\":[\"order\"],\"statements\":[[7,\"div\"],[11,\"class\",\"container\"],[9],[0,\"\\n    \"],[7,\"div\"],[11,\"class\",\"row\"],[9],[0,\"\\n        \"],[7,\"div\"],[11,\"class\",\"col-md-12\"],[9],[0,\"\\n            \"],[1,[21,\"outlet\"],false],[0,\"\\n            \"],[7,\"div\"],[11,\"class\",\"jumbotron text-center\"],[9],[0,\"\\n                \"],[7,\"h1\"],[9],[0,\"My Account\"],[10],[7,\"br\"],[9],[10],[0,\"\\n                \"],[7,\"h4\"],[11,\"class\",\"lead\"],[9],[1,[23,[\"auth\",\"user\",\"firstname\"]],false],[0,\" \"],[1,[23,[\"auth\",\"user\",\"lastname\"]],false],[10],[7,\"br\"],[9],[10],[0,\"\\n                \"],[7,\"button\"],[11,\"class\",\"btn btn-outline-danger btn-sm\"],[11,\"type\",\"button\"],[3,\"action\",[[22,0,[]],\"logout\"]],[9],[0,\"Log Out\"],[10],[0,\"\\n            \"],[10],[0,\"\\n\\n            \"],[7,\"div\"],[11,\"class\",\"alert alert-success\"],[11,\"id\",\"success-alert\"],[11,\"style\",\"display: none;\"],[9],[0,\"\\n                \"],[7,\"button\"],[11,\"class\",\"close\"],[11,\"data-dismiss\",\"alert\"],[11,\"type\",\"button\"],[3,\"action\",[[22,0,[]],\"hideSuccess\"]],[9],[0,\"x\"],[10],[0,\"\\n                \"],[7,\"strong\"],[9],[0,\"Success! \"],[10],[0,\"\\n                Your profile has been saved successfully.\\n            \"],[10],[0,\"\\n\\n            \"],[7,\"form\"],[11,\"class\",\"form-horizontal\"],[9],[0,\"\\n\"],[0,\"                \"],[7,\"div\"],[11,\"class\",\"row\"],[9],[0,\"\\n                    \"],[7,\"div\"],[11,\"class\",\"col\"],[9],[0,\"\\n                        \"],[1,[27,\"validated-input\",null,[[\"model\",\"valuePath\",\"placeholder\",\"didValidate\",\"title\"],[[23,[\"auth\",\"user\"]],\"firstname\",\"John\",[23,[\"didValidate\"]],\"First Name\"]]],false],[0,\"\\n                    \"],[10],[0,\"\\n                    \"],[7,\"div\"],[11,\"class\",\"col\"],[9],[0,\"\\n                        \"],[1,[27,\"validated-input\",null,[[\"model\",\"valuePath\",\"placeholder\",\"didValidate\",\"title\"],[[23,[\"auth\",\"user\"]],\"lastname\",\"Doe\",[23,[\"didValidate\"]],\"Last Name\"]]],false],[0,\"\\n                    \"],[10],[0,\"\\n                \"],[10],[0,\"\\n                \"],[7,\"div\"],[11,\"class\",\"row\"],[9],[0,\"\\n                    \"],[7,\"div\"],[11,\"class\",\"col\"],[9],[0,\"\\n                        \"],[1,[27,\"validated-input\",null,[[\"type\",\"model\",\"valuePath\",\"placeholder\",\"didValidate\",\"title\"],[\"email\",[23,[\"auth\",\"user\"]],\"email\",\"JohnDoe@gmail.com\",[23,[\"didValidate\"]],\"Email\"]]],false],[0,\"\\n                    \"],[10],[0,\"\\n                    \"],[7,\"div\"],[11,\"class\",\"col\"],[9],[0,\"\\n                        \"],[1,[27,\"validated-input\",null,[[\"model\",\"valuePath\",\"placeholder\",\"didValidate\",\"title\"],[[23,[\"auth\",\"profile\"]],\"phonenumber\",\"(402) 867-5309\",[23,[\"didValidate\"]],\"Phone\"]]],false],[0,\"\\n                    \"],[10],[0,\"\\n                \"],[10],[0,\"\\n                \"],[7,\"div\"],[11,\"class\",\"row\"],[9],[0,\"\\n                    \"],[7,\"div\"],[11,\"class\",\"col\"],[9],[0,\"\\n                        \"],[1,[27,\"validated-input\",null,[[\"model\",\"valuePath\",\"placeholder\",\"didValidate\",\"title\"],[[23,[\"auth\",\"profile\"]],\"address\",\"1234 S. Monroe Street\",[23,[\"didValidate\"]],\"Address\"]]],false],[0,\"\\n                    \"],[10],[0,\"\\n                    \"],[7,\"div\"],[11,\"class\",\"col\"],[9],[0,\"\\n                        \"],[7,\"button\"],[11,\"class\",\"btn btn-success\"],[11,\"style\",\"float: right;\"],[12,\"disabled\",[27,\"get\",[[27,\"get\",[[23,[\"model\"]],\"validations\"],null],\"isInvalid\"],null]],[3,\"action\",[[22,0,[]],\"save\"]],[9],[0,\"Save\"],[10],[0,\"\\n                    \"],[10],[0,\"\\n                \"],[10],[0,\"\\n                \\n                \\n                \"],[7,\"br\"],[9],[10],[0,\"\\n            \"],[10],[0,\"\\n\\n            \"],[7,\"hr\"],[11,\"style\",\"margin-top: -10px; margin-bottom: 20px;\"],[9],[10],[0,\"\\n\\n            \"],[7,\"h5\"],[11,\"style\",\"text-align: left; margin-bottom: 10px;\"],[9],[0,\"My Orders\"],[10],[0,\"\\n\"],[4,\"if\",[[23,[\"auth\",\"user\",\"profile\",\"checkouts\"]]],null,{\"statements\":[[0,\"                \"],[7,\"div\"],[11,\"class\",\"row\"],[9],[0,\"\\n\"],[4,\"each\",[[23,[\"auth\",\"user\",\"profile\",\"checkouts\"]]],null,{\"statements\":[[0,\"                        \"],[7,\"div\"],[11,\"class\",\"col-lg-4 col-md-6 mb-4\"],[9],[0,\"\\n                            \"],[7,\"div\"],[11,\"class\",\"card text-center h-100\"],[9],[0,\"\\n                                \"],[7,\"div\"],[11,\"class\",\"card-body\"],[9],[0,\"\\n                                    \"],[7,\"h5\"],[11,\"class\",\"card-title\"],[9],[1,[22,1,[\"firstname\"]],false],[0,\" \"],[1,[22,1,[\"lastname\"]],false],[10],[0,\"\\n                                    \"],[7,\"p\"],[11,\"class\",\"card-text\"],[9],[1,[27,\"moment-format\",[[22,1,[\"createdon\"]],\"dddd, MMMM Do\"],null],false],[10],[0,\"   \"],[0,\"\\n                                    \"],[7,\"p\"],[11,\"class\",\"card-text\"],[11,\"style\",\"margin-top: -10px; margin-bottom: -10px;\"],[9],[7,\"strong\"],[9],[0,\"Fulfilled: \"],[10],[4,\"if\",[[22,1,[\"fulfilledon\"]]],null,{\"statements\":[[0,\" \"],[7,\"p\"],[11,\"style\",\"color: green; display: inline-block;\"],[9],[0,\"Yes\"],[10],[0,\" \"]],\"parameters\":[]},{\"statements\":[[0,\" \"],[7,\"p\"],[11,\"style\",\"color: red; display: inline-block;\"],[9],[0,\"No\"],[10],[0,\" \"]],\"parameters\":[]}],[10],[0,\"\\n                                    \"],[7,\"p\"],[11,\"class\",\"card-text\"],[11,\"style\",\"margin-bottom: -10px;\"],[9],[7,\"strong\"],[9],[0,\"Returned: \"],[10],[4,\"if\",[[22,1,[\"returnedon\"]]],null,{\"statements\":[[0,\" \"],[7,\"p\"],[11,\"style\",\"color: green; display: inline-block;\"],[9],[0,\"Yes\"],[10],[0,\" \"]],\"parameters\":[]},{\"statements\":[[0,\" \"],[7,\"p\"],[11,\"style\",\"color: red; display: inline-block;\"],[9],[0,\"No\"],[10],[0,\" \"]],\"parameters\":[]}],[10],[0,\"\\n                                    \"],[7,\"p\"],[11,\"class\",\"card-text\"],[9],[1,[22,1,[\"items\",\"length\"]],false],[0,\" items\"],[10],[0,\"\\n\"],[4,\"link-to\",[\"manage.manage-order\",[22,1,[]]],null,{\"statements\":[[0,\"                                        \"],[7,\"a\"],[11,\"class\",\"btn btn-primary\"],[11,\"style\",\"color: white;\"],[9],[0,\"View Order\"],[10],[0,\"\\n\"]],\"parameters\":[]},null],[0,\"                                \"],[10],[0,\"\\n                            \"],[10],[0,\"\\n                        \"],[10],[0,\"\\n\"]],\"parameters\":[1]},null],[0,\"                \"],[10],[0,\"\\n\"]],\"parameters\":[]},{\"statements\":[[0,\"                    \"],[7,\"p\"],[9],[0,\"You do not have any orders associated with your account.\"],[10],[0,\"\\n\"]],\"parameters\":[]}],[0,\"            \\n\\n            \\n            \"],[7,\"br\"],[9],[10],[7,\"br\"],[9],[10],[7,\"br\"],[9],[10],[0,\"\\n            \\n            \"],[4,\"link-to\",[\"dashboard\"],null,{\"statements\":[[0,\"Dashboard Link \"]],\"parameters\":[]},null],[0,\"\\n\"],[0,\"        \"],[10],[0,\"\\n    \"],[10],[0,\"\\n\"],[10],[0,\"\\n\"]],\"hasEval\":false}", "meta": { "moduleName": "lend-database/templates/account.hbs" } });
+  exports.default = Ember.HTMLBars.template({ "id": "OMoZi1cH", "block": "{\"symbols\":[\"order\"],\"statements\":[[7,\"div\"],[11,\"class\",\"container\"],[9],[0,\"\\n    \"],[7,\"div\"],[11,\"class\",\"row\"],[9],[0,\"\\n        \"],[7,\"div\"],[11,\"class\",\"col-md-12\"],[9],[0,\"\\n            \"],[1,[21,\"outlet\"],false],[0,\"\\n            \"],[7,\"div\"],[11,\"class\",\"jumbotron text-center\"],[9],[0,\"\\n                \"],[7,\"h1\"],[9],[0,\"My Account\"],[10],[7,\"br\"],[9],[10],[0,\"\\n                \"],[7,\"h4\"],[11,\"class\",\"lead\"],[9],[1,[23,[\"auth\",\"user\",\"firstname\"]],false],[0,\" \"],[1,[23,[\"auth\",\"user\",\"lastname\"]],false],[10],[7,\"br\"],[9],[10],[0,\"\\n                \"],[7,\"button\"],[11,\"class\",\"btn btn-outline-danger btn-sm\"],[11,\"type\",\"button\"],[3,\"action\",[[22,0,[]],\"logout\"]],[9],[0,\"Log Out\"],[10],[0,\"\\n            \"],[10],[0,\"\\n\\n            \"],[7,\"div\"],[11,\"class\",\"alert alert-success\"],[11,\"id\",\"success-alert\"],[11,\"style\",\"display: none;\"],[9],[0,\"\\n                \"],[7,\"button\"],[11,\"class\",\"close\"],[11,\"data-dismiss\",\"alert\"],[11,\"type\",\"button\"],[3,\"action\",[[22,0,[]],\"hideSuccess\"]],[9],[0,\"x\"],[10],[0,\"\\n                \"],[7,\"strong\"],[9],[0,\"Success! \"],[10],[0,\"\\n                Your profile has been saved successfully.\\n            \"],[10],[0,\"\\n\\n            \"],[7,\"form\"],[11,\"class\",\"form-horizontal\"],[9],[0,\"\\n\"],[0,\"                \"],[7,\"div\"],[11,\"class\",\"row\"],[9],[0,\"\\n                    \"],[7,\"div\"],[11,\"class\",\"col\"],[9],[0,\"\\n                        \"],[1,[27,\"validated-input\",null,[[\"model\",\"valuePath\",\"placeholder\",\"didValidate\",\"title\"],[[23,[\"model\",\"user\"]],\"firstname\",\"John\",[23,[\"didValidate\"]],\"First Name\"]]],false],[0,\"\\n                    \"],[10],[0,\"\\n                    \"],[7,\"div\"],[11,\"class\",\"col\"],[9],[0,\"\\n                        \"],[1,[27,\"validated-input\",null,[[\"model\",\"valuePath\",\"placeholder\",\"didValidate\",\"title\"],[[23,[\"model\",\"user\"]],\"lastname\",\"Doe\",[23,[\"didValidate\"]],\"Last Name\"]]],false],[0,\"\\n                    \"],[10],[0,\"\\n                \"],[10],[0,\"\\n                \"],[7,\"div\"],[11,\"class\",\"row\"],[9],[0,\"\\n                    \"],[7,\"div\"],[11,\"class\",\"col\"],[9],[0,\"\\n                        \"],[1,[27,\"validated-input\",null,[[\"type\",\"model\",\"valuePath\",\"placeholder\",\"didValidate\",\"title\"],[\"email\",[23,[\"model\",\"user\"]],\"email\",\"JohnDoe@gmail.com\",[23,[\"didValidate\"]],\"Email\"]]],false],[0,\"\\n                    \"],[10],[0,\"\\n                    \"],[7,\"div\"],[11,\"class\",\"col\"],[9],[0,\"\\n                        \"],[1,[27,\"validated-input\",null,[[\"model\",\"valuePath\",\"placeholder\",\"didValidate\",\"title\"],[[23,[\"model\",\"profile\"]],\"phonenumber\",\"(402) 867-5309\",[23,[\"didValidate\"]],\"Phone\"]]],false],[0,\"\\n                    \"],[10],[0,\"\\n                \"],[10],[0,\"\\n                \"],[7,\"div\"],[11,\"class\",\"row\"],[9],[0,\"\\n                    \"],[7,\"div\"],[11,\"class\",\"col\"],[9],[0,\"\\n                        \"],[1,[27,\"validated-input\",null,[[\"model\",\"valuePath\",\"placeholder\",\"didValidate\",\"title\"],[[23,[\"model\",\"profile\"]],\"address\",\"1234 S. Monroe Street\",[23,[\"didValidate\"]],\"Address\"]]],false],[0,\"\\n                    \"],[10],[0,\"\\n                    \"],[7,\"div\"],[11,\"class\",\"col\"],[9],[0,\"\\n                        \"],[7,\"button\"],[11,\"class\",\"btn btn-success\"],[11,\"style\",\"float: right;\"],[12,\"disabled\",[27,\"get\",[[27,\"get\",[[23,[\"model\"]],\"validations\"],null],\"isInvalid\"],null]],[3,\"action\",[[22,0,[]],\"save\"]],[9],[0,\"Save\"],[10],[0,\"\\n                    \"],[10],[0,\"\\n                \"],[10],[0,\"\\n                \\n                \\n                \"],[7,\"br\"],[9],[10],[0,\"\\n            \"],[10],[0,\"\\n\\n            \"],[7,\"hr\"],[11,\"style\",\"margin-top: -10px; margin-bottom: 20px;\"],[9],[10],[0,\"\\n\\n            \"],[7,\"h5\"],[11,\"style\",\"text-align: left; margin-bottom: 10px;\"],[9],[0,\"My Orders\"],[10],[0,\"\\n\"],[4,\"if\",[[23,[\"auth\",\"user\",\"profile\",\"checkouts\"]]],null,{\"statements\":[[0,\"                \"],[7,\"div\"],[11,\"class\",\"row\"],[9],[0,\"\\n\"],[4,\"each\",[[23,[\"auth\",\"user\",\"profile\",\"checkouts\"]]],null,{\"statements\":[[0,\"                        \"],[7,\"div\"],[11,\"class\",\"col-lg-4 col-md-6 mb-4\"],[9],[0,\"\\n                            \"],[7,\"div\"],[11,\"class\",\"card text-center h-100\"],[9],[0,\"\\n                                \"],[7,\"div\"],[11,\"class\",\"card-body\"],[9],[0,\"\\n                                    \"],[7,\"h5\"],[11,\"class\",\"card-title\"],[9],[1,[22,1,[\"firstname\"]],false],[0,\" \"],[1,[22,1,[\"lastname\"]],false],[10],[0,\"\\n                                    \"],[7,\"p\"],[11,\"class\",\"card-text\"],[9],[1,[27,\"moment-format\",[[22,1,[\"createdon\"]],\"dddd, MMMM Do\"],null],false],[10],[0,\"   \"],[0,\"\\n                                    \"],[7,\"p\"],[11,\"class\",\"card-text\"],[11,\"style\",\"margin-top: -10px; margin-bottom: -10px;\"],[9],[7,\"strong\"],[9],[0,\"Fulfilled: \"],[10],[4,\"if\",[[22,1,[\"fulfilledon\"]]],null,{\"statements\":[[0,\" \"],[7,\"p\"],[11,\"style\",\"color: green; display: inline-block;\"],[9],[0,\"Yes\"],[10],[0,\" \"]],\"parameters\":[]},{\"statements\":[[0,\" \"],[7,\"p\"],[11,\"style\",\"color: red; display: inline-block;\"],[9],[0,\"No\"],[10],[0,\" \"]],\"parameters\":[]}],[10],[0,\"\\n                                    \"],[7,\"p\"],[11,\"class\",\"card-text\"],[11,\"style\",\"margin-bottom: -10px;\"],[9],[7,\"strong\"],[9],[0,\"Returned: \"],[10],[4,\"if\",[[22,1,[\"returnedon\"]]],null,{\"statements\":[[0,\" \"],[7,\"p\"],[11,\"style\",\"color: green; display: inline-block;\"],[9],[0,\"Yes\"],[10],[0,\" \"]],\"parameters\":[]},{\"statements\":[[0,\" \"],[7,\"p\"],[11,\"style\",\"color: red; display: inline-block;\"],[9],[0,\"No\"],[10],[0,\" \"]],\"parameters\":[]}],[10],[0,\"\\n                                    \"],[7,\"p\"],[11,\"class\",\"card-text\"],[9],[1,[22,1,[\"items\",\"length\"]],false],[0,\" items\"],[10],[0,\"\\n\"],[4,\"link-to\",[\"manage.manage-order\",[22,1,[]]],null,{\"statements\":[[0,\"                                        \"],[7,\"a\"],[11,\"class\",\"btn btn-primary\"],[11,\"style\",\"color: white;\"],[9],[0,\"View Order\"],[10],[0,\"\\n\"]],\"parameters\":[]},null],[0,\"                                \"],[10],[0,\"\\n                            \"],[10],[0,\"\\n                        \"],[10],[0,\"\\n\"]],\"parameters\":[1]},null],[0,\"                \"],[10],[0,\"\\n\"]],\"parameters\":[]},{\"statements\":[[0,\"                    \"],[7,\"p\"],[9],[0,\"You do not have any orders associated with your account.\"],[10],[0,\"\\n                    \"],[7,\"p\"],[9],[0,\"You can browse our library of items to check out \"],[4,\"link-to\",[\"library.index\"],null,{\"statements\":[[0,\"here\"]],\"parameters\":[]},null],[0,\".\"],[10],[0,\"\\n\"]],\"parameters\":[]}],[0,\"            \\n\\n            \\n            \"],[7,\"br\"],[9],[10],[7,\"br\"],[9],[10],[7,\"br\"],[9],[10],[0,\"\\n            \\n            \"],[4,\"link-to\",[\"dashboard\"],null,{\"statements\":[[0,\"Dashboard Link \"]],\"parameters\":[]},null],[0,\"\\n\"],[0,\"        \"],[10],[0,\"\\n    \"],[10],[0,\"\\n\"],[10],[0,\"\\n\"]],\"hasEval\":false}", "meta": { "moduleName": "lend-database/templates/account.hbs" } });
 });
 ;define("lend-database/templates/application", ["exports"], function (exports) {
   "use strict";
@@ -3617,7 +3808,7 @@
   Object.defineProperty(exports, "__esModule", {
     value: true
   });
-  exports.default = Ember.HTMLBars.template({ "id": "A1vkCawA", "block": "{\"symbols\":[],\"statements\":[[7,\"nav\"],[11,\"class\",\"navbar navbar-expand-md navbar-dark bg-dark mb-4\"],[9],[0,\"\\n  \"],[4,\"link-to\",[\"index\"],[[\"class\"],[\"navbar-brand\"]],{\"statements\":[[7,\"i\"],[11,\"class\",\"fa fa-book\"],[11,\"aria-hidden\",\"true\"],[9],[10],[0,\" Lending Library \"]],\"parameters\":[]},null],[0,\"\\n\"],[0,\"  \"],[7,\"button\"],[11,\"class\",\"navbar-toggler\"],[11,\"data-toggle\",\"collapse\"],[11,\"data-target\",\"#navbarCollapse\"],[11,\"aria-controls\",\"navbarCollapse\"],[11,\"aria-expanded\",\"false\"],[11,\"aria-label\",\"Toggle navigation\"],[11,\"type\",\"button\"],[9],[0,\"\\n    \"],[7,\"span\"],[11,\"class\",\"navbar-toggler-icon\"],[9],[10],[0,\"\\n  \"],[10],[0,\"\\n  \"],[7,\"div\"],[11,\"class\",\"collapse navbar-collapse\"],[11,\"id\",\"navbarCollapse\"],[9],[0,\"\\n    \"],[7,\"ul\"],[11,\"class\",\"navbar-nav mr-auto\"],[9],[0,\"\\n      \"],[7,\"li\"],[11,\"class\",\"nav-item\"],[9],[0,\"\\n        \"],[4,\"link-to\",[\"about\"],null,{\"statements\":[[7,\"a\"],[11,\"class\",\"nav-link\"],[9],[0,\"About\"],[10]],\"parameters\":[]},null],[0,\"\\n      \"],[10],[0,\"\\n\\n      \"],[7,\"li\"],[11,\"class\",\"nav-item\"],[9],[0,\"\\n        \"],[4,\"link-to\",[\"library\"],null,{\"statements\":[[7,\"a\"],[11,\"class\",\"nav-link\"],[9],[0,\"Library\"],[10]],\"parameters\":[]},null],[0,\"\\n      \"],[10],[0,\"\\n    \"],[10],[0,\"\\n\\n    \"],[7,\"ul\"],[11,\"class\",\"navbar-nav justify-content-end\"],[9],[0,\"\\n\"],[4,\"if\",[[23,[\"auth\",\"isLoggedIn\"]]],null,{\"statements\":[[0,\"        \"],[7,\"li\"],[11,\"class\",\"nav-item\"],[9],[0,\"\\n          \"],[4,\"link-to\",[\"account\"],null,{\"statements\":[[7,\"a\"],[11,\"class\",\"nav-link\"],[9],[0,\"Account\"],[10]],\"parameters\":[]},null],[0,\"\\n        \"],[10],[0,\"\\n\"]],\"parameters\":[]},{\"statements\":[[0,\"        \"],[7,\"li\"],[11,\"class\",\"nav-item\"],[9],[0,\"\\n          \"],[4,\"link-to\",[\"login\"],[[\"class\"],[\"nav-link\"]],{\"statements\":[[0,\"Login\"]],\"parameters\":[]},null],[0,\"\\n        \"],[10],[0,\"\\n\"]],\"parameters\":[]}],[0,\"\\n      \"],[4,\"link-to\",[\"cart\"],null,{\"statements\":[[7,\"a\"],[11,\"class\",\"nav-link\"],[9],[7,\"i\"],[11,\"class\",\"fa fa-shopping-cart\"],[11,\"aria-hidden\",\"true\"],[9],[10],[0,\" Cart \"],[4,\"if\",[[22,0,[\"cart\",\"cart\",\"length\"]]],null,{\"statements\":[[0,\" (\"],[1,[22,0,[\"cart\",\"cart\",\"length\"]],false],[0,\") \"]],\"parameters\":[]},null],[10]],\"parameters\":[]},null],[0,\"\\n    \\n    \"],[10],[0,\"\\n\\n  \"],[10],[0,\"\\n\"],[10],[0,\"\\n\\n\\n\\n\"],[0,\"\\n\"],[1,[21,\"outlet\"],false],[0,\"\\n\"]],\"hasEval\":false}", "meta": { "moduleName": "lend-database/templates/application.hbs" } });
+  exports.default = Ember.HTMLBars.template({ "id": "beaEExJZ", "block": "{\"symbols\":[],\"statements\":[[7,\"nav\"],[11,\"class\",\"navbar navbar-expand-md navbar-dark bg-dark mb-4\"],[9],[0,\"\\n  \"],[4,\"link-to\",[\"index\"],[[\"class\"],[\"navbar-brand\"]],{\"statements\":[[7,\"i\"],[11,\"class\",\"fa fa-book\"],[11,\"aria-hidden\",\"true\"],[9],[10],[0,\" Lending Library \"]],\"parameters\":[]},null],[0,\"\\n\"],[0,\"  \"],[7,\"button\"],[11,\"class\",\"navbar-toggler\"],[11,\"data-toggle\",\"collapse\"],[11,\"data-target\",\"#navbarCollapse\"],[11,\"aria-controls\",\"navbarCollapse\"],[11,\"aria-expanded\",\"false\"],[11,\"aria-label\",\"Toggle navigation\"],[11,\"type\",\"button\"],[9],[0,\"\\n    \"],[7,\"span\"],[11,\"class\",\"navbar-toggler-icon\"],[9],[10],[0,\"\\n  \"],[10],[0,\"\\n  \"],[7,\"div\"],[11,\"class\",\"collapse navbar-collapse\"],[11,\"id\",\"navbarCollapse\"],[9],[0,\"\\n    \"],[7,\"ul\"],[11,\"class\",\"navbar-nav mr-auto\"],[9],[0,\"\\n      \"],[7,\"li\"],[11,\"class\",\"nav-item\"],[9],[0,\"\\n        \"],[4,\"link-to\",[\"about\"],null,{\"statements\":[[7,\"a\"],[11,\"class\",\"nav-link\"],[9],[0,\"About\"],[10]],\"parameters\":[]},null],[0,\"\\n      \"],[10],[0,\"\\n\\n      \"],[7,\"li\"],[11,\"class\",\"nav-item\"],[9],[0,\"\\n        \"],[4,\"link-to\",[\"library\"],null,{\"statements\":[[7,\"a\"],[11,\"class\",\"nav-link\"],[9],[0,\"Library\"],[10]],\"parameters\":[]},null],[0,\"\\n      \"],[10],[0,\"\\n    \"],[10],[0,\"\\n\\n    \"],[7,\"ul\"],[11,\"class\",\"navbar-nav justify-content-end\"],[9],[0,\"\\n\"],[4,\"if\",[[23,[\"auth\",\"isLoggedIn\"]]],null,{\"statements\":[[0,\"        \"],[7,\"li\"],[11,\"class\",\"nav-item\"],[9],[0,\"\\n          \"],[4,\"link-to\",[\"account\"],null,{\"statements\":[[7,\"a\"],[11,\"class\",\"nav-link\"],[9],[0,\"Account\"],[10]],\"parameters\":[]},null],[0,\"\\n        \"],[10],[0,\"\\n\"]],\"parameters\":[]},{\"statements\":[[0,\"        \"],[7,\"li\"],[11,\"class\",\"nav-item\"],[9],[0,\"\\n          \"],[4,\"link-to\",[\"login\"],[[\"class\"],[\"nav-link\"]],{\"statements\":[[0,\"Login\"]],\"parameters\":[]},null],[0,\"\\n        \"],[10],[0,\"\\n\\n        \"],[7,\"li\"],[11,\"class\",\"nav-item\"],[9],[0,\"\\n          \"],[4,\"link-to\",[\"register\"],[[\"class\"],[\"nav-link\"]],{\"statements\":[[0,\"Register\"]],\"parameters\":[]},null],[0,\"\\n        \"],[10],[0,\"\\n\"]],\"parameters\":[]}],[0,\"\\n      \"],[4,\"link-to\",[\"cart\"],null,{\"statements\":[[7,\"a\"],[11,\"class\",\"nav-link\"],[9],[7,\"i\"],[11,\"class\",\"fa fa-shopping-cart\"],[11,\"aria-hidden\",\"true\"],[9],[10],[0,\" Cart \"],[4,\"if\",[[22,0,[\"cart\",\"cart\",\"length\"]]],null,{\"statements\":[[0,\" (\"],[1,[22,0,[\"cart\",\"cart\",\"length\"]],false],[0,\") \"]],\"parameters\":[]},null],[10]],\"parameters\":[]},null],[0,\"\\n    \\n    \"],[10],[0,\"\\n\\n  \"],[10],[0,\"\\n\"],[10],[0,\"\\n\\n\\n\\n\"],[0,\"\\n\"],[1,[21,\"outlet\"],false],[0,\"\\n\"]],\"hasEval\":false}", "meta": { "moduleName": "lend-database/templates/application.hbs" } });
 });
 ;define("lend-database/templates/cart", ["exports"], function (exports) {
   "use strict";
@@ -3625,7 +3816,15 @@
   Object.defineProperty(exports, "__esModule", {
     value: true
   });
-  exports.default = Ember.HTMLBars.template({ "id": "JzkavtiK", "block": "{\"symbols\":[\"Modal\",\"footer\",\"cartitem\",\"index\"],\"statements\":[[7,\"div\"],[11,\"class\",\"container\"],[9],[0,\"\\n  \"],[7,\"div\"],[11,\"class\",\"row\"],[9],[0,\"\\n    \"],[7,\"div\"],[11,\"class\",\"col-md-12\"],[9],[0,\"\\n      \"],[1,[21,\"outlet\"],false],[0,\"\\n      \"],[7,\"div\"],[11,\"class\",\"jumbotron text-center\"],[9],[0,\"\\n        \"],[7,\"h1\"],[9],[0,\"Shopping Cart\"],[7,\"br\"],[9],[10],[10],[0,\"\\n      \"],[10],[0,\"\\n\\n\"],[4,\"if\",[[22,0,[\"cart\",\"cart\",\"length\"]]],null,{\"statements\":[[0,\"      \"],[7,\"table\"],[11,\"class\",\"table table-hover rounded\"],[9],[0,\"\\n        \"],[7,\"thead\"],[11,\"class\",\"thead-light\"],[9],[0,\"\\n          \"],[7,\"tr\"],[9],[0,\"\\n            \"],[7,\"th\"],[11,\"scope\",\"col\"],[11,\"class\",\"col-13\"],[9],[10],[0,\"\\n            \"],[7,\"th\"],[11,\"scope\",\"col\"],[11,\"class\",\"col-12\"],[9],[0,\"Product\"],[10],[0,\"\\n            \"],[7,\"th\"],[11,\"scope\",\"col\"],[9],[0,\"Quantity\"],[10],[0,\"\\n          \"],[10],[0,\"\\n        \"],[10],[0,\"\\n        \"],[7,\"tbody\"],[9],[0,\"\\n\"],[4,\"each\",[[22,0,[\"cart\",\"cart\"]]],null,{\"statements\":[[0,\"          \"],[7,\"tr\"],[9],[0,\"\\n            \"],[7,\"td\"],[9],[7,\"button\"],[11,\"class\",\"btn btn-danger btn-sm\"],[11,\"type\",\"button\"],[3,\"action\",[[22,0,[]],\"remove\",[22,3,[\"itemtype\"]]]],[9],[0,\"Remove\"],[10],[10],[0,\"\\n            \"],[7,\"td\"],[9],[7,\"strong\"],[9],[1,[22,3,[\"itemtype\",\"partname\"]],false],[10],[10],[0,\"\\n            \"],[7,\"td\"],[9],[0,\"\\n              \"],[7,\"select\"],[11,\"class\",\"form-control\"],[12,\"id\",[27,\"one-word\",[[22,3,[\"itemtype\",\"partname\"]]],null]],[12,\"onchange\",[27,\"action\",[[22,0,[]],\"modifyQuantity\",[22,3,[\"itemtype\"]]],null]],[11,\"style\",\"text-align-last:center;\"],[9],[0,\"\\n\"],[4,\"n-times\",null,[[\"times\"],[10]],{\"statements\":[[4,\"if\",[[27,\"eq\",[[22,4,[]],[22,3,[\"quantity\"]]],null]],null,{\"statements\":[[0,\"                    \"],[7,\"option\"],[12,\"value\",[22,4,[]]],[11,\"selected\",\"true\"],[9],[1,[22,4,[]],false],[10],[0,\"\\n\"]],\"parameters\":[]},{\"statements\":[[0,\"                    \"],[7,\"option\"],[12,\"value\",[22,4,[]]],[9],[1,[22,4,[]],false],[10],[0,\"\\n\"]],\"parameters\":[]}]],\"parameters\":[4]},null],[0,\"              \"],[10],[0,\"\\n            \"],[10],[0,\"\\n          \"],[10],[0,\"\\n\"]],\"parameters\":[3]},null],[0,\"        \"],[10],[0,\"\\n      \"],[10],[0,\"\\n\\n      \"],[7,\"hr\"],[11,\"style\",\"margin-top: -15px;\"],[9],[10],[0,\"\\n      \"],[7,\"div\"],[11,\"class\",\"d-inline-block\"],[9],[0,\"\\n        \"],[7,\"button\"],[11,\"class\",\"btn btn-outline-danger btn-sm\"],[11,\"data-toggle\",\"modal\"],[11,\"type\",\"button\"],[3,\"action\",[[22,0,[]],\"confirm\"]],[9],[0,\"Clear Cart\"],[10],[0,\"\\n      \"],[10],[0,\"\\n\\n\"],[0,\"\\n      \"],[5,\"bs-modal\",[],[[\"@open\",\"@onSubmit\"],[[21,\"confirm\"],[27,\"action\",[[22,0,[]],\"clear\"],null]]],{\"statements\":[[0,\"\\n        \"],[6,[22,1,[\"header\"]],[],[[],[]],{\"statements\":[[0,\"\\n          \"],[7,\"h4\"],[11,\"class\",\"modal-title\"],[9],[7,\"i\"],[11,\"class\",\"fa fa-exclamation-circle\"],[11,\"aria-hidden\",\"true\"],[9],[10],[0,\" Confirm\"],[10],[0,\"\\n        \"]],\"parameters\":[]}],[0,\"\\n        \"],[6,[22,1,[\"body\"]],[],[[],[]],{\"statements\":[[0,\"\\n          Are you sure you would like to clear your cart and everything inside of it?\\n        \"]],\"parameters\":[]}],[0,\"\\n        \"],[6,[22,1,[\"footer\"]],[],[[],[]],{\"statements\":[[0,\"\\n          \"],[5,\"bs-button\",[],[[\"@onClick\",\"@type\"],[[27,\"action\",[[22,0,[]],[22,1,[\"close\"]]],null],\"basic\"]],{\"statements\":[[0,\"Cancel\"]],\"parameters\":[]}],[0,\"\\n          \"],[5,\"bs-button\",[],[[\"@onClick\",\"@type\"],[[27,\"action\",[[22,0,[]],[22,1,[\"submit\"]]],null],\"danger\"]],{\"statements\":[[0,\"Clear Cart\"]],\"parameters\":[]}],[0,\"\\n        \"]],\"parameters\":[2]}],[0,\"\\n      \"]],\"parameters\":[1]}],[0,\"\\n\\n\"],[0,\"\\n      \"],[7,\"div\"],[11,\"class\",\"d-inline-block float-right\"],[9],[0,\"\\n        \"],[4,\"link-to\",[\"checkout\"],null,{\"statements\":[[7,\"button\"],[11,\"class\",\"btn btn-success float-right\"],[9],[0,\"Proceed to Checkout\"],[10]],\"parameters\":[]},null],[0,\"\\n      \"],[10],[0,\"\\n\\n\"]],\"parameters\":[]},{\"statements\":[[0,\"        \"],[7,\"center\"],[9],[0,\"\\n          \"],[7,\"p\"],[9],[0,\"There are currently no items in your cart. Please visit the \"],[4,\"link-to\",[\"library\"],null,{\"statements\":[[0,\"library\"]],\"parameters\":[]},null],[0,\" to view\\n            items you can check out.\"],[10],[0,\"\\n        \"],[10],[0,\"\\n\"]],\"parameters\":[]}],[0,\"    \"],[10],[0,\"\\n  \"],[10],[0,\"\\n\"],[10]],\"hasEval\":false}", "meta": { "moduleName": "lend-database/templates/cart.hbs" } });
+  exports.default = Ember.HTMLBars.template({ "id": "Q7UKx1iT", "block": "{\"symbols\":[\"Modal\",\"cartitem\",\"index\"],\"statements\":[[7,\"div\"],[11,\"class\",\"container\"],[9],[0,\"\\n  \"],[7,\"div\"],[11,\"class\",\"row\"],[9],[0,\"\\n    \"],[7,\"div\"],[11,\"class\",\"col-md-12\"],[9],[0,\"\\n      \"],[1,[21,\"outlet\"],false],[0,\"\\n      \"],[7,\"div\"],[11,\"class\",\"jumbotron text-center\"],[9],[0,\"\\n        \"],[7,\"h1\"],[9],[0,\"Shopping Cart\"],[7,\"br\"],[9],[10],[10],[0,\"\\n      \"],[10],[0,\"\\n\\n\"],[4,\"if\",[[22,0,[\"cart\",\"cart\",\"length\"]]],null,{\"statements\":[[0,\"      \"],[7,\"table\"],[11,\"class\",\"table table-hover rounded\"],[9],[0,\"\\n        \"],[7,\"thead\"],[11,\"class\",\"thead-light\"],[9],[0,\"\\n          \"],[7,\"tr\"],[9],[0,\"\\n            \"],[7,\"th\"],[11,\"scope\",\"col\"],[11,\"class\",\"col-13\"],[9],[10],[0,\"\\n            \"],[7,\"th\"],[11,\"scope\",\"col\"],[11,\"class\",\"col-12\"],[9],[0,\"Product\"],[10],[0,\"\\n            \"],[7,\"th\"],[11,\"scope\",\"col\"],[9],[0,\"Quantity\"],[10],[0,\"\\n          \"],[10],[0,\"\\n        \"],[10],[0,\"\\n        \"],[7,\"tbody\"],[9],[0,\"\\n\"],[4,\"each\",[[22,0,[\"cart\",\"cart\"]]],null,{\"statements\":[[0,\"          \"],[7,\"tr\"],[9],[0,\"\\n            \"],[7,\"td\"],[9],[7,\"button\"],[11,\"class\",\"btn btn-danger btn-sm\"],[11,\"type\",\"button\"],[3,\"action\",[[22,0,[]],\"remove\",[22,2,[\"itemtype\"]]]],[9],[0,\"Remove\"],[10],[10],[0,\"\\n            \"],[7,\"td\"],[9],[7,\"strong\"],[9],[1,[22,2,[\"itemtype\",\"partname\"]],false],[10],[10],[0,\"\\n            \"],[7,\"td\"],[9],[0,\"\\n              \"],[7,\"select\"],[11,\"class\",\"form-control\"],[12,\"id\",[27,\"one-word\",[[22,2,[\"itemtype\",\"partname\"]]],null]],[12,\"onchange\",[27,\"action\",[[22,0,[]],\"modifyQuantity\",[22,2,[\"itemtype\"]]],null]],[11,\"style\",\"text-align-last:center;\"],[9],[0,\"\\n\"],[4,\"n-times\",null,[[\"times\"],[10]],{\"statements\":[[4,\"if\",[[27,\"eq\",[[22,3,[]],[22,2,[\"quantity\"]]],null]],null,{\"statements\":[[0,\"                    \"],[7,\"option\"],[12,\"value\",[22,3,[]]],[11,\"selected\",\"true\"],[9],[1,[22,3,[]],false],[10],[0,\"\\n\"]],\"parameters\":[]},{\"statements\":[[0,\"                    \"],[7,\"option\"],[12,\"value\",[22,3,[]]],[9],[1,[22,3,[]],false],[10],[0,\"\\n\"]],\"parameters\":[]}]],\"parameters\":[3]},null],[0,\"              \"],[10],[0,\"\\n            \"],[10],[0,\"\\n          \"],[10],[0,\"\\n\"]],\"parameters\":[2]},null],[0,\"        \"],[10],[0,\"\\n      \"],[10],[0,\"\\n\\n      \"],[7,\"hr\"],[11,\"style\",\"margin-top: -15px;\"],[9],[10],[0,\"\\n      \"],[7,\"div\"],[11,\"class\",\"d-inline-block\"],[9],[0,\"\\n        \"],[7,\"button\"],[11,\"class\",\"btn btn-outline-danger btn-sm\"],[11,\"data-toggle\",\"modal\"],[11,\"type\",\"button\"],[3,\"action\",[[22,0,[]],\"confirm\"]],[9],[0,\"Clear Cart\"],[10],[0,\"\\n      \"],[10],[0,\"\\n\\n\"],[0,\"\\n      \"],[5,\"bs-modal\",[],[[\"@open\",\"@onSubmit\"],[[21,\"confirm\"],[27,\"action\",[[22,0,[]],\"clear\"],null]]],{\"statements\":[[0,\"\\n        \"],[6,[22,1,[\"header\"]],[],[[],[]],{\"statements\":[[0,\"\\n          \"],[7,\"h4\"],[11,\"class\",\"modal-title\"],[9],[7,\"i\"],[11,\"class\",\"fa fa-exclamation-circle\"],[11,\"aria-hidden\",\"true\"],[9],[10],[0,\" Confirm\"],[10],[0,\"\\n        \"]],\"parameters\":[]}],[0,\"\\n        \"],[6,[22,1,[\"body\"]],[],[[],[]],{\"statements\":[[0,\"\\n          Are you sure you would like to clear your cart and everything inside of it?\\n        \"]],\"parameters\":[]}],[0,\"\\n        \"],[6,[22,1,[\"footer\"]],[],[[],[]],{\"statements\":[[0,\"\\n          \"],[5,\"bs-button\",[],[[\"@onClick\",\"@type\"],[[27,\"action\",[[22,0,[]],[22,1,[\"close\"]]],null],\"basic\"]],{\"statements\":[[0,\"Cancel\"]],\"parameters\":[]}],[0,\"\\n          \"],[5,\"bs-button\",[],[[\"@onClick\",\"@type\"],[[27,\"action\",[[22,0,[]],[22,1,[\"submit\"]]],null],\"danger\"]],{\"statements\":[[0,\"Clear Cart\"]],\"parameters\":[]}],[0,\"\\n        \"]],\"parameters\":[]}],[0,\"\\n      \"]],\"parameters\":[1]}],[0,\"\\n\\n\"],[0,\"\\n      \"],[7,\"div\"],[11,\"class\",\"d-inline-block float-right\"],[9],[0,\"\\n        \"],[4,\"link-to\",[\"checkout\"],null,{\"statements\":[[7,\"button\"],[11,\"class\",\"btn btn-success float-right\"],[9],[0,\"Proceed to Checkout\"],[10]],\"parameters\":[]},null],[0,\"\\n      \"],[10],[0,\"\\n\\n\"]],\"parameters\":[]},{\"statements\":[[0,\"        \"],[7,\"center\"],[9],[0,\"\\n          \"],[7,\"p\"],[9],[0,\"There are currently no items in your cart. Please visit the \"],[4,\"link-to\",[\"library\"],null,{\"statements\":[[0,\"library\"]],\"parameters\":[]},null],[0,\" to view\\n            items you can check out.\"],[10],[0,\"\\n        \"],[10],[0,\"\\n\"]],\"parameters\":[]}],[0,\"    \"],[10],[0,\"\\n  \"],[10],[0,\"\\n\"],[10]],\"hasEval\":false}", "meta": { "moduleName": "lend-database/templates/cart.hbs" } });
+});
+;define("lend-database/templates/checkout-backup", ["exports"], function (exports) {
+  "use strict";
+
+  Object.defineProperty(exports, "__esModule", {
+    value: true
+  });
+  exports.default = Ember.HTMLBars.template({ "id": "2v0aze4a", "block": "{\"symbols\":[\"cartitem\"],\"statements\":[[7,\"div\"],[11,\"class\",\"container\"],[9],[0,\"\\n    \"],[7,\"div\"],[11,\"class\",\"row\"],[9],[0,\"\\n        \"],[7,\"div\"],[11,\"class\",\"col-md-12\"],[9],[0,\"\\n            \"],[1,[21,\"outlet\"],false],[0,\"\\n            \"],[7,\"div\"],[11,\"class\",\"jumbotron text-center\"],[9],[0,\"\\n                \"],[7,\"h1\"],[9],[0,\"Checkout\"],[7,\"br\"],[9],[10],[10],[0,\"\\n            \"],[10],[0,\"\\n\\n\"],[0,\"            \"],[7,\"div\"],[11,\"class\",\"alert alert-success\"],[11,\"id\",\"success-alert\"],[11,\"style\",\"display: none;\"],[9],[0,\"\\n                \"],[7,\"button\"],[11,\"class\",\"close\"],[11,\"data-dismiss\",\"alert\"],[11,\"type\",\"button\"],[3,\"action\",[[22,0,[]],\"hideSuccess\"]],[9],[0,\"x\"],[10],[0,\"\\n                \"],[7,\"strong\"],[9],[0,\"Success! \"],[10],[0,\"\\n                Your order has successfully been placed! \\n\"],[0,\"            \"],[10],[0,\"\\n\\n            \"],[7,\"div\"],[11,\"class\",\"alert alert-danger\"],[11,\"id\",\"danger-alert\"],[11,\"style\",\"display: none;\"],[9],[0,\"\\n                \"],[7,\"button\"],[11,\"class\",\"close\"],[11,\"data-dismiss\",\"alert\"],[11,\"type\",\"button\"],[3,\"action\",[[22,0,[]],\"hideDanger\"]],[9],[0,\"x\"],[10],[0,\"\\n                \"],[7,\"strong\"],[9],[0,\"Error! \"],[10],[0,\"\\n                \"],[1,[22,0,[\"errorMsg\"]],false],[0,\"\\n            \"],[10],[0,\"\\n\\n            \"],[7,\"form\"],[11,\"class\",\"form-horizontal\"],[9],[0,\"\\n\"],[0,\"                \"],[7,\"div\"],[11,\"class\",\"row\"],[9],[0,\"\\n                    \"],[7,\"div\"],[11,\"class\",\"col\"],[9],[0,\"\\n                        \"],[7,\"div\"],[11,\"class\",\"input-group mb-3\"],[9],[0,\"\\n                            \"],[7,\"div\"],[11,\"class\",\"input-group-prepend\"],[9],[0,\"\\n                                \"],[7,\"span\"],[11,\"class\",\"input-group-text\"],[9],[0,\"First Name\"],[10],[0,\"\\n                            \"],[10],[0,\"\\n\"],[4,\"if\",[[23,[\"auth\",\"isLoggedIn\"]]],null,{\"statements\":[[0,\"                                \"],[1,[27,\"input\",null,[[\"type\",\"id\",\"value\",\"class\",\"aria-label\",\"aria-describedby\",\"disabled\"],[\"text\",\"first\",[23,[\"auth\",\"user\",\"firstname\"]],\"form-control\",\"First\",\"first\",\"true\"]]],false],[0,\"\\n\"]],\"parameters\":[]},{\"statements\":[[0,\"                                \"],[1,[27,\"validated-input\",null,[[\"model\",\"valuePath\",\"placeholder\",\"didValidate\",\"title\",\"value\"],[[23,[\"model\"]],\"first\",\"John\",[23,[\"didValidate\"]],\"First name\",[22,0,[\"model\",\"newCheckout\",\"firstname\"]]]]],false],[0,\"\\n\"]],\"parameters\":[]}],[0,\"                        \"],[10],[0,\"\\n                    \"],[10],[0,\"\\n                    \"],[7,\"div\"],[11,\"class\",\"col\"],[9],[0,\"\\n                        \"],[7,\"div\"],[11,\"class\",\"input-group mb-3\"],[9],[0,\"\\n                            \"],[7,\"div\"],[11,\"class\",\"input-group-prepend\"],[9],[0,\"\\n                                \"],[7,\"span\"],[11,\"class\",\"input-group-text\"],[9],[0,\"Last Name\"],[10],[0,\"\\n                            \"],[10],[0,\"\\n\"],[4,\"if\",[[23,[\"auth\",\"isLoggedIn\"]]],null,{\"statements\":[[0,\"                                \"],[1,[27,\"input\",null,[[\"type\",\"id\",\"value\",\"class\",\"aria-label\",\"aria-describedby\",\"disabled\"],[\"text\",\"last\",[23,[\"auth\",\"user\",\"lastname\"]],\"form-control\",\"Last\",\"last\",\"true\"]]],false],[0,\"\\n\"]],\"parameters\":[]},{\"statements\":[[0,\"                                \"],[1,[27,\"input\",null,[[\"type\",\"id\",\"class\",\"placeholder\",\"aria-label\",\"aria-describedby\"],[\"text\",\"last\",\"form-control\",\"Doe\",\"Last\",\"last\"]]],false],[0,\"\\n\"]],\"parameters\":[]}],[0,\"                        \"],[10],[0,\"\\n                    \"],[10],[0,\"\\n                \"],[10],[0,\"\\n                \"],[7,\"div\"],[11,\"class\",\"row\"],[9],[0,\"\\n                    \"],[7,\"div\"],[11,\"class\",\"col\"],[9],[0,\"\\n                        \"],[7,\"div\"],[11,\"class\",\"input-group mb-3\"],[9],[0,\"\\n                            \"],[7,\"div\"],[11,\"class\",\"input-group-prepend\"],[9],[0,\"\\n                                \"],[7,\"span\"],[11,\"class\",\"input-group-text\"],[9],[0,\"     Email    \"],[10],[0,\"\\n                            \"],[10],[0,\"\\n\"],[4,\"if\",[[23,[\"auth\",\"isLoggedIn\"]]],null,{\"statements\":[[0,\"                                \"],[1,[27,\"input\",null,[[\"type\",\"id\",\"value\",\"class\",\"aria-label\",\"aria-describedby\",\"disabled\"],[\"email\",\"email\",[23,[\"auth\",\"user\",\"email\"]],\"form-control\",\"Email\",\"email\",\"true\"]]],false],[0,\"\\n\"]],\"parameters\":[]},{\"statements\":[[0,\"                                \"],[1,[27,\"input\",null,[[\"type\",\"id\",\"value\",\"class\",\"placeholder\",\"aria-label\",\"aria-describedby\"],[\"email\",\"email\",[23,[\"email\"]],\"form-control\",\"johndoe@gmail.com\",\"Email\",\"email\"]]],false],[0,\"\\n\"]],\"parameters\":[]}],[0,\"                        \"],[10],[0,\"\\n                    \"],[10],[0,\"\\n                    \"],[7,\"div\"],[11,\"class\",\"col\"],[9],[0,\"\\n                        \"],[7,\"div\"],[11,\"class\",\"input-group mb-3\"],[9],[0,\"\\n                            \"],[7,\"div\"],[11,\"class\",\"input-group-prepend\"],[9],[0,\"\\n                                \"],[7,\"span\"],[11,\"class\",\"input-group-text\"],[9],[0,\"    Phone    \"],[10],[0,\"\\n                            \"],[10],[0,\"\\n\"],[4,\"if\",[[23,[\"auth\",\"isLoggedIn\"]]],null,{\"statements\":[[0,\"                                \"],[1,[27,\"input\",null,[[\"type\",\"id\",\"value\",\"class\",\"aria-label\",\"aria-describedby\",\"disabled\"],[\"tel\",\"phone\",[23,[\"auth\",\"profile\",\"phonenumber\"]],\"form-control\",\"Phone\",\"phone\",\"true\"]]],false],[0,\"\\n\"]],\"parameters\":[]},{\"statements\":[[0,\"                                \"],[1,[27,\"input\",null,[[\"type\",\"id\",\"class\",\"placeholder\",\"aria-label\",\"aria-describedby\"],[\"tel\",\"phone\",\"form-control\",\"(402) 867-5309\",\"Phone\",\"phone\"]]],false],[0,\"\\n\"]],\"parameters\":[]}],[0,\"                        \"],[10],[0,\"\\n                    \"],[10],[0,\"\\n                \"],[10],[0,\"\\n                \"],[7,\"div\"],[11,\"class\",\"row\"],[9],[0,\"\\n                    \"],[7,\"div\"],[11,\"class\",\"col\"],[9],[0,\"\\n                        \"],[7,\"div\"],[11,\"class\",\"input-group mb-3\"],[9],[0,\"\\n                            \"],[7,\"div\"],[11,\"class\",\"input-group-prepend\"],[9],[0,\"\\n                                \"],[7,\"span\"],[11,\"class\",\"input-group-text\"],[9],[0,\"  Address  \"],[10],[0,\"\\n                            \"],[10],[0,\"\\n\"],[4,\"if\",[[23,[\"auth\",\"isLoggedIn\"]]],null,{\"statements\":[[0,\"                                \"],[1,[27,\"input\",null,[[\"type\",\"id\",\"value\",\"class\",\"aria-label\",\"aria-describedby\",\"disabled\"],[\"text\",\"address\",[23,[\"auth\",\"profile\",\"address\"]],\"form-control\",\"Address\",\"address\",\"true\"]]],false],[0,\"\\n\"]],\"parameters\":[]},{\"statements\":[[0,\"                                \"],[1,[27,\"input\",null,[[\"type\",\"id\",\"class\",\"placeholder\",\"aria-label\",\"aria-describedby\"],[\"text\",\"address\",\"form-control\",\"1234 South Monroe Street\",\"Address\",\"address\"]]],false],[0,\"\\n\"]],\"parameters\":[]}],[0,\"                        \"],[10],[0,\"\\n                    \"],[10],[0,\"\\n                    \"],[7,\"div\"],[11,\"class\",\"col\"],[9],[0,\"\\n                        \"],[7,\"div\"],[11,\"class\",\"input-group mb-3\"],[9],[0,\"\\n                            \"],[7,\"div\"],[11,\"class\",\"input-group-prepend\"],[9],[0,\"\\n                                \"],[7,\"span\"],[11,\"class\",\"input-group-text\"],[9],[0,\" Students  \"],[10],[0,\"\\n                            \"],[10],[0,\"\\n                            \"],[1,[27,\"input\",null,[[\"type\",\"id\",\"value\",\"min\",\"max\",\"class\",\"placeholder\",\"aria-label\",\"aria-describedby\"],[\"number\",\"students\",[23,[\"students\"]],\"1\",\"99\",\"form-control\",\"47\",\"Students\",\"students\"]]],false],[0,\"\\n                        \"],[10],[0,\"\\n                    \"],[10],[0,\"\\n                \"],[10],[0,\"\\n                \"],[7,\"br\"],[9],[10],[0,\"\\n            \"],[10],[0,\"\\n\\n            \"],[7,\"div\"],[11,\"class\",\"card text-center\"],[11,\"style\",\"width: 100%;\"],[9],[0,\"\\n                \"],[7,\"div\"],[11,\"class\",\"card-body\"],[11,\"style\",\"width: 100%;\"],[9],[0,\"\\n                    \\n                    \"],[7,\"h4\"],[11,\"class\",\"card-title\"],[9],[0,\"Review Cart:\"],[10],[0,\"\\n                    \"],[7,\"hr\"],[9],[10],[0,\"\\n\\n\"],[4,\"each\",[[22,0,[\"cart\",\"cart\"]]],null,{\"statements\":[[0,\"                        \"],[7,\"p\"],[11,\"class\",\"card-text\"],[9],[1,[22,1,[\"itemtype\",\"category\",\"categoryname\"]],false],[0,\" » \"],[7,\"p\"],[11,\"class\",\"text-primary\"],[11,\"style\",\"display: inline-block;\"],[9],[1,[22,1,[\"itemtype\",\"partname\"]],false],[0,\" (\"],[1,[22,1,[\"quantity\"]],false],[0,\")\"],[10],[10],[0,\"\\n\"]],\"parameters\":[1]},null],[0,\"\\n                \"],[10],[0,\"\\n            \"],[10],[0,\"\\n            \"],[7,\"br\"],[9],[10],[0,\"\\n\\n            \"],[7,\"button\"],[11,\"class\",\"btn btn-success\"],[11,\"style\",\"float: right;\"],[11,\"type\",\"submit\"],[3,\"action\",[[22,0,[]],\"checkout\"]],[9],[0,\"Checkout »\"],[10],[0,\"\\n\\n        \"],[10],[0,\"\\n    \"],[10],[0,\"\\n\"],[10],[0,\"\\n\"]],\"hasEval\":false}", "meta": { "moduleName": "lend-database/templates/checkout-backup.hbs" } });
 });
 ;define("lend-database/templates/checkout", ["exports"], function (exports) {
   "use strict";
@@ -3633,7 +3832,7 @@
   Object.defineProperty(exports, "__esModule", {
     value: true
   });
-  exports.default = Ember.HTMLBars.template({ "id": "qncGK870", "block": "{\"symbols\":[\"cartitem\"],\"statements\":[[7,\"div\"],[11,\"class\",\"container\"],[9],[0,\"\\n    \"],[7,\"div\"],[11,\"class\",\"row\"],[9],[0,\"\\n        \"],[7,\"div\"],[11,\"class\",\"col-md-12\"],[9],[0,\"\\n            \"],[1,[21,\"outlet\"],false],[0,\"\\n            \"],[7,\"div\"],[11,\"class\",\"jumbotron text-center\"],[9],[0,\"\\n                \"],[7,\"h1\"],[9],[0,\"Checkout\"],[7,\"br\"],[9],[10],[10],[0,\"\\n            \"],[10],[0,\"\\n\\n\"],[0,\"            \"],[7,\"div\"],[11,\"class\",\"alert alert-success\"],[11,\"id\",\"success-alert\"],[11,\"style\",\"display: none;\"],[9],[0,\"\\n                \"],[7,\"button\"],[11,\"class\",\"close\"],[11,\"data-dismiss\",\"alert\"],[11,\"type\",\"button\"],[3,\"action\",[[22,0,[]],\"hideSuccess\"]],[9],[0,\"x\"],[10],[0,\"\\n                \"],[7,\"strong\"],[9],[0,\"Success! \"],[10],[0,\"\\n                Your order has successfully been placed! \\n\"],[0,\"            \"],[10],[0,\"\\n\\n            \"],[7,\"div\"],[11,\"class\",\"alert alert-danger\"],[11,\"id\",\"danger-alert\"],[11,\"style\",\"display: none;\"],[9],[0,\"\\n                \"],[7,\"button\"],[11,\"class\",\"close\"],[11,\"data-dismiss\",\"alert\"],[11,\"type\",\"button\"],[3,\"action\",[[22,0,[]],\"hideDanger\"]],[9],[0,\"x\"],[10],[0,\"\\n                \"],[7,\"strong\"],[9],[0,\"Error! \"],[10],[0,\"\\n                \"],[1,[22,0,[\"errorMsg\"]],false],[0,\"\\n            \"],[10],[0,\"\\n\\n            \"],[7,\"form\"],[11,\"class\",\"form-horizontal\"],[9],[0,\"\\n\"],[0,\"                \"],[7,\"div\"],[11,\"class\",\"row\"],[9],[0,\"\\n                    \"],[7,\"div\"],[11,\"class\",\"col\"],[9],[0,\"\\n                        \"],[7,\"div\"],[11,\"class\",\"input-group mb-3\"],[9],[0,\"\\n                            \"],[7,\"div\"],[11,\"class\",\"input-group-prepend\"],[9],[0,\"\\n                                \"],[7,\"span\"],[11,\"class\",\"input-group-text\"],[9],[0,\"First Name\"],[10],[0,\"\\n                            \"],[10],[0,\"\\n\"],[4,\"if\",[[23,[\"auth\",\"isLoggedIn\"]]],null,{\"statements\":[[0,\"                                \"],[1,[27,\"input\",null,[[\"type\",\"id\",\"value\",\"class\",\"aria-label\",\"aria-describedby\",\"disabled\"],[\"text\",\"first\",[23,[\"auth\",\"user\",\"firstname\"]],\"form-control\",\"First\",\"first\",\"true\"]]],false],[0,\"\\n\"]],\"parameters\":[]},{\"statements\":[[0,\"                                \"],[1,[27,\"input\",null,[[\"type\",\"id\",\"class\",\"placeholder\",\"aria-label\",\"aria-describedby\"],[\"text\",\"first\",\"form-control\",\"John\",\"First\",\"first\"]]],false],[0,\"\\n\"]],\"parameters\":[]}],[0,\"                        \"],[10],[0,\"\\n                    \"],[10],[0,\"\\n                    \"],[7,\"div\"],[11,\"class\",\"col\"],[9],[0,\"\\n                        \"],[7,\"div\"],[11,\"class\",\"input-group mb-3\"],[9],[0,\"\\n                            \"],[7,\"div\"],[11,\"class\",\"input-group-prepend\"],[9],[0,\"\\n                                \"],[7,\"span\"],[11,\"class\",\"input-group-text\"],[9],[0,\"Last Name\"],[10],[0,\"\\n                            \"],[10],[0,\"\\n\"],[4,\"if\",[[23,[\"auth\",\"isLoggedIn\"]]],null,{\"statements\":[[0,\"                                \"],[1,[27,\"input\",null,[[\"type\",\"id\",\"value\",\"class\",\"aria-label\",\"aria-describedby\",\"disabled\"],[\"text\",\"last\",[23,[\"auth\",\"user\",\"lastname\"]],\"form-control\",\"Last\",\"last\",\"true\"]]],false],[0,\"\\n\"]],\"parameters\":[]},{\"statements\":[[0,\"                                \"],[1,[27,\"input\",null,[[\"type\",\"id\",\"class\",\"placeholder\",\"aria-label\",\"aria-describedby\"],[\"text\",\"last\",\"form-control\",\"Doe\",\"Last\",\"last\"]]],false],[0,\"\\n\"]],\"parameters\":[]}],[0,\"                        \"],[10],[0,\"\\n                    \"],[10],[0,\"\\n                \"],[10],[0,\"\\n                \"],[7,\"div\"],[11,\"class\",\"row\"],[9],[0,\"\\n                    \"],[7,\"div\"],[11,\"class\",\"col\"],[9],[0,\"\\n                        \"],[7,\"div\"],[11,\"class\",\"input-group mb-3\"],[9],[0,\"\\n                            \"],[7,\"div\"],[11,\"class\",\"input-group-prepend\"],[9],[0,\"\\n                                \"],[7,\"span\"],[11,\"class\",\"input-group-text\"],[9],[0,\"     Email    \"],[10],[0,\"\\n                            \"],[10],[0,\"\\n\"],[4,\"if\",[[23,[\"auth\",\"isLoggedIn\"]]],null,{\"statements\":[[0,\"                                \"],[1,[27,\"input\",null,[[\"type\",\"id\",\"value\",\"class\",\"aria-label\",\"aria-describedby\",\"disabled\"],[\"email\",\"email\",[23,[\"auth\",\"user\",\"email\"]],\"form-control\",\"Email\",\"email\",\"true\"]]],false],[0,\"\\n\"]],\"parameters\":[]},{\"statements\":[[0,\"                                \"],[1,[27,\"input\",null,[[\"type\",\"id\",\"value\",\"class\",\"placeholder\",\"aria-label\",\"aria-describedby\"],[\"email\",\"email\",[23,[\"email\"]],\"form-control\",\"johndoe@gmail.com\",\"Email\",\"email\"]]],false],[0,\"\\n\"]],\"parameters\":[]}],[0,\"                        \"],[10],[0,\"\\n                    \"],[10],[0,\"\\n                    \"],[7,\"div\"],[11,\"class\",\"col\"],[9],[0,\"\\n                        \"],[7,\"div\"],[11,\"class\",\"input-group mb-3\"],[9],[0,\"\\n                            \"],[7,\"div\"],[11,\"class\",\"input-group-prepend\"],[9],[0,\"\\n                                \"],[7,\"span\"],[11,\"class\",\"input-group-text\"],[9],[0,\"    Phone    \"],[10],[0,\"\\n                            \"],[10],[0,\"\\n\"],[4,\"if\",[[23,[\"auth\",\"isLoggedIn\"]]],null,{\"statements\":[[0,\"                                \"],[1,[27,\"input\",null,[[\"type\",\"id\",\"value\",\"class\",\"aria-label\",\"aria-describedby\",\"disabled\"],[\"tel\",\"phone\",[23,[\"auth\",\"profile\",\"phonenumber\"]],\"form-control\",\"Phone\",\"phone\",\"true\"]]],false],[0,\"\\n\"]],\"parameters\":[]},{\"statements\":[[0,\"                                \"],[1,[27,\"input\",null,[[\"type\",\"id\",\"class\",\"placeholder\",\"aria-label\",\"aria-describedby\"],[\"tel\",\"phone\",\"form-control\",\"(402) 867-5309\",\"Phone\",\"phone\"]]],false],[0,\"\\n\"]],\"parameters\":[]}],[0,\"                        \"],[10],[0,\"\\n                    \"],[10],[0,\"\\n                \"],[10],[0,\"\\n                \"],[7,\"div\"],[11,\"class\",\"row\"],[9],[0,\"\\n                    \"],[7,\"div\"],[11,\"class\",\"col\"],[9],[0,\"\\n                        \"],[7,\"div\"],[11,\"class\",\"input-group mb-3\"],[9],[0,\"\\n                            \"],[7,\"div\"],[11,\"class\",\"input-group-prepend\"],[9],[0,\"\\n                                \"],[7,\"span\"],[11,\"class\",\"input-group-text\"],[9],[0,\"  Address  \"],[10],[0,\"\\n                            \"],[10],[0,\"\\n\"],[4,\"if\",[[23,[\"auth\",\"isLoggedIn\"]]],null,{\"statements\":[[0,\"                                \"],[1,[27,\"input\",null,[[\"type\",\"id\",\"value\",\"class\",\"aria-label\",\"aria-describedby\",\"disabled\"],[\"text\",\"address\",[23,[\"auth\",\"profile\",\"address\"]],\"form-control\",\"Address\",\"address\",\"true\"]]],false],[0,\"\\n\"]],\"parameters\":[]},{\"statements\":[[0,\"                                \"],[1,[27,\"input\",null,[[\"type\",\"id\",\"class\",\"placeholder\",\"aria-label\",\"aria-describedby\"],[\"text\",\"address\",\"form-control\",\"1234 South Monroe Street\",\"Address\",\"address\"]]],false],[0,\"\\n\"]],\"parameters\":[]}],[0,\"                        \"],[10],[0,\"\\n                    \"],[10],[0,\"\\n                    \"],[7,\"div\"],[11,\"class\",\"col\"],[9],[0,\"\\n                        \"],[7,\"div\"],[11,\"class\",\"input-group mb-3\"],[9],[0,\"\\n                            \"],[7,\"div\"],[11,\"class\",\"input-group-prepend\"],[9],[0,\"\\n                                \"],[7,\"span\"],[11,\"class\",\"input-group-text\"],[9],[0,\" Students  \"],[10],[0,\"\\n                            \"],[10],[0,\"\\n                            \"],[1,[27,\"input\",null,[[\"type\",\"id\",\"value\",\"min\",\"max\",\"class\",\"placeholder\",\"aria-label\",\"aria-describedby\"],[\"number\",\"students\",[23,[\"students\"]],\"1\",\"99\",\"form-control\",\"47\",\"Students\",\"students\"]]],false],[0,\"\\n                        \"],[10],[0,\"\\n                    \"],[10],[0,\"\\n                \"],[10],[0,\"\\n                \"],[7,\"br\"],[9],[10],[0,\"\\n            \"],[10],[0,\"\\n\\n            \"],[7,\"div\"],[11,\"class\",\"card text-center\"],[11,\"style\",\"width: 100%;\"],[9],[0,\"\\n                \"],[7,\"div\"],[11,\"class\",\"card-body\"],[11,\"style\",\"width: 100%;\"],[9],[0,\"\\n                    \\n                    \"],[7,\"h4\"],[11,\"class\",\"card-title\"],[9],[0,\"Review Cart:\"],[10],[0,\"\\n                    \"],[7,\"hr\"],[9],[10],[0,\"\\n\\n\"],[4,\"each\",[[22,0,[\"cart\",\"cart\"]]],null,{\"statements\":[[0,\"                        \"],[7,\"p\"],[11,\"class\",\"card-text\"],[9],[1,[22,1,[\"itemtype\",\"category\",\"categoryname\"]],false],[0,\" » \"],[7,\"p\"],[11,\"class\",\"text-primary\"],[11,\"style\",\"display: inline-block;\"],[9],[1,[22,1,[\"itemtype\",\"partname\"]],false],[0,\" (\"],[1,[22,1,[\"quantity\"]],false],[0,\")\"],[10],[10],[0,\"\\n\"]],\"parameters\":[1]},null],[0,\"\\n                \"],[10],[0,\"\\n            \"],[10],[0,\"\\n            \"],[7,\"br\"],[9],[10],[0,\"\\n\\n            \"],[7,\"button\"],[11,\"class\",\"btn btn-success\"],[11,\"style\",\"float: right;\"],[11,\"type\",\"submit\"],[3,\"action\",[[22,0,[]],\"checkout\"]],[9],[0,\"Checkout »\"],[10],[0,\"\\n\\n        \"],[10],[0,\"\\n    \"],[10],[0,\"\\n\"],[10],[0,\"\\n\"]],\"hasEval\":false}", "meta": { "moduleName": "lend-database/templates/checkout.hbs" } });
+  exports.default = Ember.HTMLBars.template({ "id": "N7/ApPni", "block": "{\"symbols\":[\"cartitem\"],\"statements\":[[7,\"div\"],[11,\"class\",\"container\"],[9],[0,\"\\n    \"],[7,\"div\"],[11,\"class\",\"row\"],[9],[0,\"\\n        \"],[7,\"div\"],[11,\"class\",\"col-md-12\"],[9],[0,\"\\n            \"],[1,[21,\"outlet\"],false],[0,\"\\n            \"],[7,\"div\"],[11,\"class\",\"jumbotron text-center\"],[9],[0,\"\\n                \"],[7,\"h1\"],[9],[0,\"Checkout\"],[7,\"br\"],[9],[10],[10],[0,\"\\n            \"],[10],[0,\"\\n\\n\"],[0,\"\\n            \"],[7,\"div\"],[11,\"class\",\"alert alert-success\"],[11,\"id\",\"success-alert\"],[11,\"style\",\"display: none;\"],[9],[0,\"\\n                \"],[7,\"button\"],[11,\"class\",\"close\"],[11,\"data-dismiss\",\"alert\"],[11,\"type\",\"button\"],[3,\"action\",[[22,0,[]],\"hideSuccess\"]],[9],[0,\"x\"],[10],[0,\"\\n                \"],[7,\"strong\"],[9],[0,\"Success! \"],[10],[0,\"\\n                Your order has successfully been placed! \\n\"],[0,\"            \"],[10],[0,\"\\n\\n            \"],[7,\"div\"],[11,\"class\",\"alert alert-danger\"],[11,\"id\",\"danger-alert\"],[11,\"style\",\"display: none;\"],[9],[0,\"\\n                \"],[7,\"button\"],[11,\"class\",\"close\"],[11,\"data-dismiss\",\"alert\"],[11,\"type\",\"button\"],[3,\"action\",[[22,0,[]],\"hideDanger\"]],[9],[0,\"x\"],[10],[0,\"\\n                \"],[7,\"strong\"],[9],[0,\"Error! \"],[10],[0,\"\\n                \"],[1,[22,0,[\"errorMsg\"]],false],[0,\"\\n            \"],[10],[0,\"\\n\\n\\n            \"],[7,\"form\"],[11,\"class\",\"form-horizontal\"],[9],[0,\"\\n\"],[0,\"            \"],[7,\"div\"],[11,\"class\",\"row\"],[9],[0,\"\\n                \"],[7,\"div\"],[11,\"class\",\"col\"],[9],[0,\"\\n\"],[4,\"if\",[[23,[\"auth\",\"isLoggedIn\"]]],null,{\"statements\":[[0,\"                        \"],[1,[27,\"validated-input\",null,[[\"model\",\"valuePath\",\"placeholder\",\"didValidate\",\"title\",\"value\",\"disabled\"],[[22,0,[\"model\",\"newCheckout\"]],\"firstname\",\"John\",[23,[\"didValidate\"]],\"First Name\",[23,[\"auth\",\"user\",\"firstname\"]],\"true\"]]],false],[0,\"\\n\"]],\"parameters\":[]},{\"statements\":[[0,\"                        \"],[1,[27,\"validated-input\",null,[[\"model\",\"valuePath\",\"placeholder\",\"didValidate\",\"title\"],[[22,0,[\"model\",\"newCheckout\"]],\"firstname\",\"John\",[23,[\"didValidate\"]],\"First Name\"]]],false],[0,\"\\n\"]],\"parameters\":[]}],[0,\"                \"],[10],[0,\"\\n\\n                \"],[7,\"div\"],[11,\"class\",\"col\"],[9],[0,\"\\n\"],[4,\"if\",[[23,[\"auth\",\"isLoggedIn\"]]],null,{\"statements\":[[0,\"                        \"],[1,[27,\"validated-input\",null,[[\"model\",\"valuePath\",\"placeholder\",\"didValidate\",\"title\",\"value\",\"disabled\"],[[22,0,[\"model\",\"newCheckout\"]],\"lastname\",\"Doe\",[23,[\"didValidate\"]],\"Last Name\",[23,[\"auth\",\"user\",\"lastname\"]],\"true\"]]],false],[0,\"\\n\"]],\"parameters\":[]},{\"statements\":[[0,\"                        \"],[1,[27,\"validated-input\",null,[[\"model\",\"valuePath\",\"placeholder\",\"didValidate\",\"title\"],[[22,0,[\"model\",\"newCheckout\"]],\"lastname\",\"Doe\",[23,[\"didValidate\"]],\"Last Name\"]]],false],[0,\"\\n\"]],\"parameters\":[]}],[0,\"                \"],[10],[0,\"\\n            \"],[10],[0,\"\\n            \"],[7,\"div\"],[11,\"class\",\"row\"],[9],[0,\"\\n                \"],[7,\"div\"],[11,\"class\",\"col\"],[9],[0,\"\\n\"],[4,\"if\",[[23,[\"auth\",\"isLoggedIn\"]]],null,{\"statements\":[[0,\"                        \"],[1,[27,\"validated-input\",null,[[\"model\",\"valuePath\",\"placeholder\",\"didValidate\",\"title\",\"value\",\"disabled\"],[[22,0,[\"model\",\"newCheckout\"]],\"email\",\"johndoe@gmail.com\",[23,[\"didValidate\"]],\"Email\",[23,[\"auth\",\"user\",\"email\"]],\"true\"]]],false],[0,\"\\n\"]],\"parameters\":[]},{\"statements\":[[0,\"                        \"],[1,[27,\"validated-input\",null,[[\"model\",\"valuePath\",\"placeholder\",\"didValidate\",\"title\"],[[22,0,[\"model\",\"newCheckout\"]],\"email\",\"johndoe@gmail.com\",[23,[\"didValidate\"]],\"Email\"]]],false],[0,\"\\n\"]],\"parameters\":[]}],[0,\"                \"],[10],[0,\"\\n\\n                \"],[7,\"div\"],[11,\"class\",\"col\"],[9],[0,\"\\n\"],[4,\"if\",[[23,[\"auth\",\"isLoggedIn\"]]],null,{\"statements\":[[0,\"                        \"],[1,[27,\"validated-input\",null,[[\"model\",\"valuePath\",\"placeholder\",\"didValidate\",\"title\",\"value\",\"disabled\"],[[22,0,[\"model\",\"newCheckout\"]],\"phonenumber\",\"(402) 867-5309\",[23,[\"didValidate\"]],\"Phone\",[23,[\"auth\",\"profile\",\"phonenumber\"]],\"true\"]]],false],[0,\"\\n\"]],\"parameters\":[]},{\"statements\":[[0,\"                        \"],[1,[27,\"validated-input\",null,[[\"model\",\"valuePath\",\"placeholder\",\"didValidate\",\"title\"],[[22,0,[\"model\",\"newCheckout\"]],\"phonenumber\",\"(402) 867-5309\",[23,[\"didValidate\"]],\"Phone\"]]],false],[0,\"\\n\"]],\"parameters\":[]}],[0,\"                \"],[10],[0,\"\\n            \"],[10],[0,\"\\n            \"],[7,\"div\"],[11,\"class\",\"row\"],[9],[0,\"\\n                \"],[7,\"div\"],[11,\"class\",\"col\"],[9],[0,\"\\n\"],[4,\"if\",[[23,[\"auth\",\"isLoggedIn\"]]],null,{\"statements\":[[0,\"                        \"],[1,[27,\"validated-input\",null,[[\"model\",\"valuePath\",\"placeholder\",\"didValidate\",\"title\",\"value\",\"disabled\"],[[22,0,[\"model\",\"newCheckout\"]],\"address\",\"1234 S. Monroe Street\",[23,[\"didValidate\"]],\"Address\",[23,[\"auth\",\"profile\",\"address\"]],\"true\"]]],false],[0,\"\\n\"]],\"parameters\":[]},{\"statements\":[[0,\"                        \"],[1,[27,\"validated-input\",null,[[\"model\",\"valuePath\",\"placeholder\",\"didValidate\",\"title\"],[[22,0,[\"model\",\"newCheckout\"]],\"address\",\"1234 S. Monroe Street\",[23,[\"didValidate\"]],\"Address\"]]],false],[0,\"\\n\"]],\"parameters\":[]}],[0,\"                \"],[10],[0,\"\\n\\n                \"],[7,\"div\"],[11,\"class\",\"col\"],[9],[0,\"\\n                    \"],[1,[27,\"validated-input\",null,[[\"model\",\"valuePath\",\"placeholder\",\"didValidate\",\"title\",\"type\"],[[22,0,[\"model\",\"newCheckout\"]],\"numberofstudents\",\"47\",[23,[\"didValidate\"]],\"Students\",\"number\"]]],false],[0,\"\\n                \"],[10],[0,\"\\n            \"],[10],[0,\"\\n            \"],[7,\"br\"],[9],[10],[0,\"\\n\\n            \"],[10],[0,\"\\n\\n\"],[0,\"\\n\\n\"],[0,\"\\n            \"],[7,\"div\"],[11,\"class\",\"card text-center\"],[11,\"style\",\"width: 100%;\"],[9],[0,\"\\n                \"],[7,\"div\"],[11,\"class\",\"card-body\"],[11,\"style\",\"width: 100%;\"],[9],[0,\"\\n                    \\n                    \"],[7,\"h4\"],[11,\"class\",\"card-title\"],[9],[0,\"Review Cart:\"],[10],[0,\"\\n                    \"],[7,\"hr\"],[9],[10],[0,\"\\n\\n\"],[4,\"each\",[[22,0,[\"cart\",\"cart\"]]],null,{\"statements\":[[0,\"                        \"],[7,\"p\"],[11,\"class\",\"card-text\"],[9],[1,[22,1,[\"itemtype\",\"category\",\"categoryname\"]],false],[0,\" » \"],[7,\"p\"],[11,\"class\",\"text-primary\"],[11,\"style\",\"display: inline-block;\"],[9],[1,[22,1,[\"itemtype\",\"partname\"]],false],[0,\" (\"],[1,[22,1,[\"quantity\"]],false],[0,\")\"],[10],[10],[0,\"\\n\"]],\"parameters\":[1]},null],[0,\"\\n                \"],[10],[0,\"\\n            \"],[10],[0,\"\\n            \"],[7,\"br\"],[9],[10],[0,\"\\n\\n            \"],[7,\"button\"],[11,\"class\",\"btn btn-success\"],[11,\"style\",\"float: right;\"],[12,\"disabled\",[27,\"get\",[[27,\"get\",[[22,0,[\"model\",\"newCheckout\"]],\"validations\"],null],\"isInvalid\"],null]],[11,\"type\",\"submit\"],[3,\"action\",[[22,0,[]],\"checkout\"]],[9],[0,\"Checkout »\"],[10],[0,\"\\n\\n        \"],[10],[0,\"\\n    \"],[10],[0,\"\\n\"],[10],[0,\"\\n\"]],\"hasEval\":false}", "meta": { "moduleName": "lend-database/templates/checkout.hbs" } });
 });
 ;define('lend-database/templates/components/ember-popper-targeting-parent', ['exports', 'ember-popper/templates/components/ember-popper-targeting-parent'], function (exports, _emberPopperTargetingParent) {
   'use strict';
@@ -3691,7 +3890,7 @@
   Object.defineProperty(exports, "__esModule", {
     value: true
   });
-  exports.default = Ember.HTMLBars.template({ "id": "5ZL7NS4W", "block": "{\"symbols\":[],\"statements\":[[7,\"div\"],[11,\"class\",\"form-group\"],[9],[0,\"\\n  \"],[7,\"div\"],[11,\"class\",\"input-group mb-3\"],[9],[0,\"\\n    \"],[7,\"div\"],[11,\"class\",\"input-group-prepend\"],[11,\"style\",\"text-align: center;\"],[9],[0,\"\\n      \"],[7,\"span\"],[11,\"class\",\"input-group-text\"],[11,\"style\",\"width: 110px; display: table; margin: 0 auto;\"],[12,\"id\",[21,\"valuePath\"]],[9],[1,[21,\"title\"],false],[10],[0,\"\\n    \"],[10],[0,\"\\n    \"],[1,[27,\"input\",[[27,\"-input-type\",[[23,[\"type\"]]],null]],[[\"type\",\"value\",\"placeholder\",\"class\",\"name\",\"aria-label\",\"aria-describedby\"],[[23,[\"type\"]],[23,[\"value\"]],[23,[\"placeholder\"]],\"form-control input-validation-style\",[23,[\"valuePath\"]],[23,[\"title\"]],\"{{valuepath}}\"]]],false],[0,\"\\n\"],[4,\"if\",[[23,[\"isValid\"]]],null,{\"statements\":[[0,\"      \"],[7,\"span\"],[11,\"class\",\"valid-input fa fa-check\"],[9],[10],[0,\"\\n\"]],\"parameters\":[]},null],[0,\"  \"],[10],[0,\"\\n  \"],[7,\"div\"],[11,\"class\",\"input-error\"],[9],[0,\"\\n\"],[4,\"if\",[[23,[\"showErrorMessage\"]]],null,{\"statements\":[[0,\"      \"],[7,\"div\"],[11,\"class\",\"error\"],[9],[0,\"\\n        \"],[1,[27,\"get\",[[27,\"get\",[[27,\"get\",[[27,\"get\",[[23,[\"model\"]],\"validations\"],null],\"attrs\"],null],[23,[\"valuePath\"]]],null],\"message\"],null],false],[0,\"\\n      \"],[10],[0,\"\\n\"]],\"parameters\":[]},null],[0,\"\\n\"],[4,\"if\",[[23,[\"showWarningMessage\"]]],null,{\"statements\":[[0,\"      \"],[7,\"div\"],[11,\"class\",\"warning\"],[9],[0,\"\\n        \"],[1,[27,\"get\",[[27,\"get\",[[27,\"get\",[[27,\"get\",[[23,[\"model\"]],\"validations\"],null],\"attrs\"],null],[23,[\"valuePath\"]]],null],\"warningMessage\"],null],false],[0,\"\\n      \"],[10],[0,\"\\n\"]],\"parameters\":[]},null],[0,\"  \"],[10],[0,\"\\n\"],[10]],\"hasEval\":false}", "meta": { "moduleName": "lend-database/templates/components/validated-input.hbs" } });
+  exports.default = Ember.HTMLBars.template({ "id": "YYUP5C62", "block": "{\"symbols\":[],\"statements\":[[7,\"div\"],[11,\"class\",\"form-group\"],[9],[0,\"\\n  \"],[7,\"div\"],[11,\"class\",\"input-group mb-3\"],[9],[0,\"\\n    \"],[7,\"div\"],[11,\"class\",\"input-group-prepend\"],[11,\"style\",\"text-align: center;\"],[9],[0,\"\\n      \"],[7,\"span\"],[11,\"class\",\"input-group-text\"],[11,\"style\",\"width: 110px; display: table; margin: 0 auto;\"],[12,\"id\",[21,\"valuePath\"]],[9],[1,[21,\"title\"],false],[10],[0,\"\\n    \"],[10],[0,\"\\n    \"],[1,[27,\"input\",[[27,\"-input-type\",[[23,[\"type\"]]],null]],[[\"type\",\"value\",\"placeholder\",\"class\",\"name\",\"aria-label\",\"aria-describedby\",\"disabled\"],[[23,[\"type\"]],[23,[\"value\"]],[23,[\"placeholder\"]],\"form-control input-validation-style\",[23,[\"valuePath\"]],[23,[\"title\"]],\"{{valuepath}}\",[23,[\"disabled\"]]]]],false],[0,\"\\n\"],[4,\"if\",[[23,[\"isValid\"]]],null,{\"statements\":[[0,\"      \"],[7,\"span\"],[11,\"class\",\"valid-input fa fa-check\"],[9],[10],[0,\"\\n\"]],\"parameters\":[]},null],[0,\"  \"],[10],[0,\"\\n  \"],[7,\"div\"],[11,\"class\",\"input-error\"],[9],[0,\"\\n\"],[4,\"if\",[[23,[\"showErrorMessage\"]]],null,{\"statements\":[[0,\"      \"],[7,\"div\"],[11,\"class\",\"error\"],[9],[0,\"\\n        \"],[1,[27,\"get\",[[27,\"get\",[[27,\"get\",[[27,\"get\",[[23,[\"model\"]],\"validations\"],null],\"attrs\"],null],[23,[\"valuePath\"]]],null],\"message\"],null],false],[0,\"\\n      \"],[10],[0,\"\\n\"]],\"parameters\":[]},null],[0,\"\\n\"],[4,\"if\",[[23,[\"showWarningMessage\"]]],null,{\"statements\":[[0,\"      \"],[7,\"div\"],[11,\"class\",\"warning\"],[9],[0,\"\\n        \"],[1,[27,\"get\",[[27,\"get\",[[27,\"get\",[[27,\"get\",[[23,[\"model\"]],\"validations\"],null],\"attrs\"],null],[23,[\"valuePath\"]]],null],\"warningMessage\"],null],false],[0,\"\\n      \"],[10],[0,\"\\n\"]],\"parameters\":[]},null],[0,\"  \"],[10],[0,\"\\n\"],[10]],\"hasEval\":false}", "meta": { "moduleName": "lend-database/templates/components/validated-input.hbs" } });
 });
 ;define('lend-database/templates/components/x-select', ['exports', 'emberx-select/templates/components/x-select'], function (exports, _xSelect) {
   'use strict';
@@ -3744,7 +3943,7 @@
   Object.defineProperty(exports, "__esModule", {
     value: true
   });
-  exports.default = Ember.HTMLBars.template({ "id": "4ujzCi6U", "block": "{\"symbols\":[\"categories\",\"category\"],\"statements\":[[7,\"div\"],[11,\"class\",\"container\"],[9],[0,\"\\n  \"],[7,\"div\"],[11,\"class\",\"row\"],[9],[0,\"\\n    \"],[7,\"div\"],[11,\"class\",\"col-md-12\"],[9],[0,\"\\n      \"],[1,[21,\"outlet\"],false],[0,\"\\n      \"],[7,\"div\"],[11,\"class\",\"jumbotron text-center\"],[9],[0,\"\\n        \"],[7,\"h1\"],[9],[0,\"Lending Library\"],[7,\"br\"],[9],[10],[10],[0,\"\\n      \"],[10],[0,\"\\n\\n\"],[4,\"list-pagination\",null,[[\"paginateBy\",\"items\"],[9,[22,0,[\"model\"]]]],{\"statements\":[[0,\"      \"],[7,\"div\"],[11,\"class\",\"row\"],[9],[0,\"\\n\"],[4,\"each\",[[22,1,[]]],null,{\"statements\":[[0,\"        \"],[7,\"div\"],[11,\"class\",\"col-lg-4 col-md-6 mb-4\"],[9],[0,\"\\n          \"],[7,\"div\"],[11,\"class\",\"card h-100\"],[9],[0,\"\\n\"],[4,\"link-to\",[\"library.library-items\",[22,2,[]]],null,{\"statements\":[[0,\"            \"],[7,\"img\"],[11,\"alt\",\"image\"],[11,\"class\",\"card-img-top\"],[12,\"src\",[22,2,[\"image\"]]],[9],[10],[0,\"\\n            \"],[7,\"div\"],[11,\"class\",\"card-body\"],[9],[0,\"\\n              \"],[7,\"h4\"],[11,\"class\",\"card-title\"],[9],[0,\"\\n                \"],[7,\"p\"],[9],[1,[22,2,[\"categoryname\"]],false],[10],[0,\"\\n              \"],[10],[0,\"\\n              \"],[7,\"p\"],[11,\"class\",\"card-text\"],[9],[1,[22,2,[\"description\"]],false],[10],[0,\"\\n            \"],[10],[0,\"\\n\"]],\"parameters\":[]},null],[0,\"          \"],[10],[0,\"\\n        \"],[10],[0,\"\\n\"]],\"parameters\":[2]},null],[0,\"      \"],[10],[0,\"\\n\"]],\"parameters\":[1]},null],[0,\"\\n    \"],[10],[0,\"\\n  \"],[10],[0,\"\\n\"],[10]],\"hasEval\":false}", "meta": { "moduleName": "lend-database/templates/library/index.hbs" } });
+  exports.default = Ember.HTMLBars.template({ "id": "dab4azrE", "block": "{\"symbols\":[\"categories\",\"category\"],\"statements\":[[7,\"div\"],[11,\"class\",\"container\"],[9],[0,\"\\n  \"],[7,\"div\"],[11,\"class\",\"row\"],[9],[0,\"\\n    \"],[7,\"div\"],[11,\"class\",\"col-md-12\"],[9],[0,\"\\n      \"],[1,[21,\"outlet\"],false],[0,\"\\n      \"],[7,\"div\"],[11,\"class\",\"jumbotron text-center\"],[9],[0,\"\\n        \"],[7,\"h1\"],[9],[0,\"Lending Library\"],[7,\"br\"],[9],[10],[10],[0,\"\\n      \"],[10],[0,\"\\n\\n\"],[4,\"list-pagination\",null,[[\"paginateBy\",\"items\"],[9,[22,0,[\"model\"]]]],{\"statements\":[[0,\"      \"],[7,\"div\"],[11,\"class\",\"row\"],[9],[0,\"\\n\"],[4,\"each\",[[22,1,[]]],null,{\"statements\":[[0,\"        \"],[7,\"div\"],[11,\"class\",\"col-lg-4 col-md-6 mb-4\"],[9],[0,\"\\n          \"],[7,\"div\"],[11,\"class\",\"card h-100\"],[9],[0,\"\\n\"],[4,\"link-to\",[\"library.library-items\",[22,2,[]]],null,{\"statements\":[[0,\"            \"],[7,\"img\"],[11,\"alt\",\"image\"],[11,\"class\",\"card-img-top\"],[12,\"src\",[22,2,[\"image\"]]],[11,\"height\",\"200vw\"],[11,\"style\",\"object-fit: cover\"],[9],[10],[0,\"\\n            \"],[7,\"div\"],[11,\"class\",\"card-body\"],[9],[0,\"\\n              \"],[7,\"h4\"],[11,\"class\",\"card-title\"],[9],[0,\"\\n                \"],[7,\"p\"],[9],[1,[22,2,[\"categoryname\"]],false],[10],[0,\"\\n              \"],[10],[0,\"\\n              \"],[7,\"p\"],[11,\"class\",\"card-text\"],[9],[1,[22,2,[\"description\"]],false],[10],[0,\"\\n            \"],[10],[0,\"\\n\"]],\"parameters\":[]},null],[0,\"          \"],[10],[0,\"\\n        \"],[10],[0,\"\\n\"]],\"parameters\":[2]},null],[0,\"      \"],[10],[0,\"\\n\"]],\"parameters\":[1]},null],[0,\"\\n    \"],[10],[0,\"\\n  \"],[10],[0,\"\\n\"],[10]],\"hasEval\":false}", "meta": { "moduleName": "lend-database/templates/library/index.hbs" } });
 });
 ;define("lend-database/templates/library/library-items", ["exports"], function (exports) {
   "use strict";
@@ -3778,21 +3977,21 @@
   });
   exports.default = Ember.HTMLBars.template({ "id": "HHyN0pQF", "block": "{\"symbols\":[],\"statements\":[[7,\"div\"],[11,\"class\",\"container\"],[9],[0,\"\\n    \"],[7,\"div\"],[11,\"class\",\"row\"],[9],[0,\"\\n        \"],[7,\"div\"],[11,\"class\",\"col-md-12\"],[9],[0,\"\\n            \"],[1,[21,\"outlet\"],false],[0,\"\\n            \"],[7,\"div\"],[11,\"class\",\"jumbotron text-center\"],[9],[0,\"\\n                \"],[7,\"h1\"],[9],[1,[22,0,[\"model\",\"firstname\"]],false],[0,\" \"],[1,[22,0,[\"model\",\"lastname\"]],false],[7,\"br\"],[9],[10],[10],[7,\"br\"],[9],[10],[0,\"\\n                \"],[7,\"p\"],[9],[7,\"strong\"],[9],[0,\"Ordered:\"],[10],[0,\" \"],[1,[27,\"moment-format\",[[22,0,[\"model\",\"createdon\"]],\"dddd, MMMM Do, YYYY\"],null],false],[10],[0,\"\\n                \"],[7,\"p\"],[11,\"style\",\"margin-top: -10px; margin-bottom: -10px;\"],[9],[7,\"strong\"],[9],[0,\"Fulfilled: \"],[10],[4,\"if\",[[22,0,[\"model\",\"fulfilledon\"]]],null,{\"statements\":[[0,\" \"],[7,\"p\"],[11,\"style\",\"color: green; display: inline-block;\"],[9],[0,\"Yes\"],[10]],\"parameters\":[]},{\"statements\":[[0,\" \"],[7,\"p\"],[11,\"style\",\"color: red; display: inline-block;\"],[9],[0,\"No\"],[10],[0,\" \"]],\"parameters\":[]}],[10],[0,\"\\n                \"],[7,\"p\"],[11,\"style\",\"margin-bottom: -30px;\"],[9],[7,\"strong\"],[9],[0,\"Returned: \"],[10],[4,\"if\",[[22,0,[\"model\",\"returnedon\"]]],null,{\"statements\":[[0,\" \"],[7,\"p\"],[11,\"style\",\"color: green; display: inline-block;\"],[9],[0,\"Yes\"],[10],[0,\" \"]],\"parameters\":[]},{\"statements\":[[0,\" \"],[7,\"p\"],[11,\"style\",\"color: red; display: inline-block;\"],[9],[0,\"No\"],[10],[0,\" \"]],\"parameters\":[]}],[10],[0,\"\\n            \\n                \"],[7,\"nav\"],[11,\"aria-label\",\"breadcrumb\"],[11,\"style\",\"margin-bottom: -60px;\"],[9],[0,\"\\n                    \"],[7,\"ol\"],[11,\"class\",\"breadcrumb\"],[9],[0,\"\\n                        \"],[7,\"li\"],[11,\"class\",\"breadcrumb-item\"],[9],[4,\"link-to\",[\"dashboard\"],null,{\"statements\":[[0,\"Home\"]],\"parameters\":[]},null],[10],[0,\"\\n                        \"],[7,\"li\"],[11,\"class\",\"breadcrumb-item\"],[9],[4,\"link-to\",[\"manage.index\"],null,{\"statements\":[[0,\"Manage\"]],\"parameters\":[]},null],[10],[0,\"\\n                        \"],[7,\"li\"],[11,\"class\",\"breadcrumb-item active\"],[11,\"aria-current\",\"page\"],[9],[1,[22,0,[\"model\",\"firstname\"]],false],[0,\" \"],[1,[22,0,[\"model\",\"lastname\"]],false],[10],[0,\"\\n                    \"],[10],[0,\"\\n                \"],[10],[0,\"\\n            \"],[10],[0,\"\\n\\n\"],[0,\"\\n\\n            \"],[7,\"form\"],[11,\"class\",\"form-horizontal\"],[3,\"action\",[[22,0,[]],\"update\"],[[\"on\"],[\"submit\"]]],[9],[0,\"\\n                \"],[7,\"div\"],[11,\"class\",\"row\"],[9],[0,\"\\n                    \"],[7,\"div\"],[11,\"class\",\"col\"],[9],[0,\"\\n                        \"],[7,\"h3\"],[11,\"class\",\"lead\"],[9],[0,\"Checkout Information:\"],[10],[0,\"\\n                        \"],[7,\"hr\"],[9],[10],[0,\"\\n                    \"],[10],[0,\"\\n                \"],[10],[0,\"\\n                \"],[7,\"div\"],[11,\"class\",\"row\"],[9],[0,\"\\n                    \"],[7,\"div\"],[11,\"class\",\"col\"],[9],[0,\"\\n                        \"],[7,\"div\"],[11,\"class\",\"input-group mb-3\"],[9],[0,\"\\n                            \"],[7,\"div\"],[11,\"class\",\"input-group-prepend\"],[9],[0,\"\\n                                \"],[7,\"span\"],[11,\"class\",\"input-group-text\"],[11,\"id\",\"first\"],[9],[0,\"First Name\"],[10],[0,\"\\n                            \"],[10],[0,\"\\n                            \"],[1,[27,\"input\",null,[[\"type\",\"value\",\"class\",\"placeholder\",\"aria-label\",\"aria-describedby\",\"required\"],[\"text\",[22,0,[\"model\",\"firstname\"]],\"form-control\",\"John\",\"First\",\"first\",\"true\"]]],false],[0,\"\\n                        \"],[10],[0,\"\\n                    \"],[10],[0,\"\\n                    \"],[7,\"div\"],[11,\"class\",\"col\"],[9],[0,\"\\n                        \"],[7,\"div\"],[11,\"class\",\"input-group mb-3\"],[9],[0,\"\\n                            \"],[7,\"div\"],[11,\"class\",\"input-group-prepend\"],[9],[0,\"\\n                                \"],[7,\"span\"],[11,\"class\",\"input-group-text\"],[11,\"id\",\"last\"],[9],[0,\"Last Name\"],[10],[0,\"\\n                            \"],[10],[0,\"\\n                            \"],[1,[27,\"input\",null,[[\"type\",\"value\",\"class\",\"placeholder\",\"aria-label\",\"aria-describedby\",\"required\"],[\"text\",[22,0,[\"model\",\"lastname\"]],\"form-control\",\"Doe\",\"Last\",\"last\",\"true\"]]],false],[0,\"\\n                        \"],[10],[0,\"\\n                    \"],[10],[0,\"\\n                \"],[10],[0,\"\\n                \"],[7,\"div\"],[11,\"class\",\"row\"],[9],[0,\"\\n                    \"],[7,\"div\"],[11,\"class\",\"col\"],[9],[0,\"\\n                        \"],[7,\"div\"],[11,\"class\",\"input-group mb-3\"],[9],[0,\"\\n                            \"],[7,\"div\"],[11,\"class\",\"input-group-prepend\"],[9],[0,\"\\n                                \"],[7,\"span\"],[11,\"class\",\"input-group-text\"],[11,\"id\",\"address\"],[9],[0,\"  Address  \"],[10],[0,\"\\n                            \"],[10],[0,\"\\n                            \"],[1,[27,\"input\",null,[[\"type\",\"value\",\"class\",\"placeholder\",\"aria-label\",\"aria-describedby\",\"required\"],[\"text\",[22,0,[\"model\",\"address\"]],\"form-control\",\"1234 South Monroe Street\",\"Address\",\"address\",\"true\"]]],false],[0,\"\\n                        \"],[10],[0,\"\\n                    \"],[10],[0,\"\\n                    \"],[7,\"div\"],[11,\"class\",\"col\"],[9],[0,\"\\n                        \"],[7,\"div\"],[11,\"class\",\"input-group mb-3\"],[9],[0,\"\\n                            \"],[7,\"div\"],[11,\"class\",\"input-group-prepend\"],[9],[0,\"\\n                                \"],[7,\"span\"],[11,\"class\",\"input-group-text\"],[11,\"id\",\"phone\"],[9],[0,\"   Phone    \"],[10],[0,\"\\n                            \"],[10],[0,\"\\n                            \"],[1,[27,\"input\",null,[[\"type\",\"value\",\"class\",\"placeholder\",\"aria-label\",\"aria-describedby\",\"required\"],[\"tel\",[22,0,[\"model\",\"phonenumber\"]],\"form-control\",\"(402) 867-5309\",\"Phone\",\"phone\",\"true\"]]],false],[0,\"\\n                        \"],[10],[0,\"\\n                    \"],[10],[0,\"\\n                \"],[10],[0,\"\\n                \"],[7,\"div\"],[11,\"class\",\"row\"],[9],[0,\"\\n                    \"],[7,\"div\"],[11,\"class\",\"col\"],[9],[0,\"\\n                        \"],[7,\"div\"],[11,\"class\",\"input-group mb-3\"],[9],[0,\"\\n                            \"],[7,\"div\"],[11,\"class\",\"input-group-prepend\"],[9],[0,\"\\n                                \"],[7,\"span\"],[11,\"class\",\"input-group-text\"],[11,\"id\",\"students\"],[9],[0,\" Students  \"],[10],[0,\"\\n                            \"],[10],[0,\"\\n                            \"],[1,[27,\"input\",null,[[\"type\",\"value\",\"min\",\"max\",\"class\",\"placeholder\",\"aria-label\",\"aria-describedby\",\"required\"],[\"number\",[22,0,[\"model\",\"numberofstudents\"]],\"1\",\"99\",\"form-control\",\"47\",\"Students\",\"students\",\"true\"]]],false],[0,\"\\n                        \"],[10],[0,\"\\n                    \"],[10],[0,\"\\n                    \"],[7,\"div\"],[11,\"class\",\"col\"],[9],[0,\"\\n                         \\n                    \"],[10],[0,\"\\n\\n                \"],[10],[0,\"\\n                \"],[7,\"div\"],[11,\"class\",\"row\"],[9],[0,\"\\n                    \"],[7,\"div\"],[11,\"class\",\"col\"],[9],[0,\"\\n                        \"],[7,\"div\"],[11,\"class\",\"input-group\"],[9],[0,\"\\n                            \"],[7,\"div\"],[11,\"class\",\"input-group-prepend\"],[9],[0,\"\\n                                \"],[7,\"span\"],[11,\"class\",\"input-group-text\"],[9],[0,\"   Missing  \"],[7,\"br\"],[9],[10],[0,\"   Parts  \"],[10],[0,\"\\n                            \"],[10],[0,\"\\n                            \"],[1,[27,\"textarea\",null,[[\"type\",\"value\",\"class\",\"aria-label\",\"height\",\"style\"],[\"text\",[22,0,[\"model\",\"missingparts\"]],\"form-control\",\"Missing Parts\",\"150px\",\"height: 150px;\"]]],false],[0,\"\\n                        \"],[10],[0,\"\\n                    \"],[10],[0,\"\\n                \"],[10],[7,\"br\"],[9],[10],[0,\"\\n                \\n\"],[0,\"\\n                \\n                \\n\"],[0,\"                \"],[7,\"br\"],[9],[10],[0,\"\\n\\n                \"],[7,\"button\"],[11,\"class\",\"btn btn-success\"],[11,\"style\",\"float: right;\"],[11,\"type\",\"submit\"],[9],[0,\"Update Order\"],[10],[0,\"\\n            \"],[10],[0,\"\\n        \"],[10],[0,\"\\n    \"],[10],[0,\"\\n\"],[10]],\"hasEval\":false}", "meta": { "moduleName": "lend-database/templates/manage/manage-order.hbs" } });
 });
+;define("lend-database/templates/register-backup", ["exports"], function (exports) {
+  "use strict";
+
+  Object.defineProperty(exports, "__esModule", {
+    value: true
+  });
+  exports.default = Ember.HTMLBars.template({ "id": "yz+pnQUT", "block": "{\"symbols\":[],\"statements\":[[7,\"div\"],[11,\"class\",\"container\"],[9],[0,\"\\n  \"],[7,\"div\"],[11,\"class\",\"row\"],[9],[0,\"\\n\"],[0,\"    \"],[7,\"div\"],[11,\"class\",\"col-md-12\"],[9],[0,\"\\n      \"],[7,\"div\"],[11,\"class\",\"jumbotron text-center\"],[9],[0,\"\\n\\n        \"],[7,\"h1\"],[9],[0,\"Register\"],[10],[7,\"br\"],[9],[10],[0,\"\\n        \"],[7,\"p\"],[11,\"style\",\"margin-bottom: 0px;\"],[9],[0,\"Creating an account will allow for you to see the progress of\"],[10],[0,\"\\n        \"],[7,\"p\"],[9],[0,\"orders with the Lending Library, and makes checking out tech much easier.\"],[10],[7,\"br\"],[9],[10],[0,\"\\n\\n        \"],[7,\"form\"],[11,\"class\",\"form-horizontal\"],[9],[0,\"\\n          \"],[7,\"h5\"],[11,\"style\",\"text-align: left; margin-bottom: 20px;\"],[9],[0,\"Login Information\"],[10],[0,\"\\n          \"],[7,\"div\"],[11,\"class\",\"row\"],[9],[0,\"\\n            \"],[7,\"div\"],[11,\"class\",\"col\"],[9],[0,\"\\n              \"],[7,\"div\"],[11,\"class\",\"input-group mb-3\"],[9],[0,\"\\n                \"],[7,\"div\"],[11,\"class\",\"input-group-prepend\"],[9],[0,\"\\n                  \"],[7,\"span\"],[11,\"class\",\"input-group-text\"],[11,\"id\",\"username\"],[9],[0,\" Username \"],[10],[0,\"\\n                \"],[10],[0,\"\\n                \"],[1,[27,\"input\",null,[[\"type\",\"value\",\"class\",\"placeholder\",\"aria-label\",\"aria-describedby\",\"required\"],[\"text\",[23,[\"username\"]],\"form-control\",\"JohnDoe1970\",\"Username\",\"username\",\"true\"]]],false],[0,\"\\n              \"],[10],[0,\"\\n            \"],[10],[0,\"\\n            \"],[7,\"div\"],[11,\"class\",\"col\"],[9],[0,\"\\n              \"],[7,\"div\"],[11,\"class\",\"input-group mb-3\"],[9],[0,\"\\n                \"],[7,\"div\"],[11,\"class\",\"input-group-prepend\"],[9],[0,\"\\n                  \"],[7,\"span\"],[11,\"class\",\"input-group-text\"],[11,\"id\",\"email\"],[9],[0,\"     Email    \"],[10],[0,\"\\n                \"],[10],[0,\"\\n                \"],[1,[27,\"input\",null,[[\"type\",\"value\",\"class\",\"placeholder\",\"aria-label\",\"aria-describedby\",\"required\"],[\"text\",[23,[\"email\"]],\"form-control\",\"JohnDoe@gmail.com\",\"Email\",\"email\",\"true\"]]],false],[0,\"\\n              \"],[10],[0,\"\\n            \"],[10],[0,\"\\n          \"],[10],[0,\"\\n          \"],[7,\"div\"],[11,\"class\",\"row\"],[9],[0,\"\\n            \"],[7,\"div\"],[11,\"class\",\"col\"],[9],[0,\"\\n              \"],[7,\"div\"],[11,\"class\",\"input-group mb-3\"],[9],[0,\"\\n                \"],[7,\"div\"],[11,\"class\",\"input-group-prepend\"],[9],[0,\"\\n                  \"],[7,\"span\"],[11,\"class\",\"input-group-text\"],[11,\"id\",\"password\"],[9],[0,\"  Password \"],[10],[0,\"\\n                \"],[10],[0,\"\\n                \"],[1,[27,\"input\",null,[[\"type\",\"value\",\"class\",\"placeholder\",\"aria-label\",\"aria-describedby\",\"required\"],[\"password\",[23,[\"password\"]],\"form-control\",\"•••••••••••\",\"Password\",\"password\",\"true\"]]],false],[0,\"\\n              \"],[10],[0,\"\\n            \"],[10],[0,\"\\n            \"],[7,\"div\"],[11,\"class\",\"col\"],[9],[0,\"\\n              \"],[7,\"div\"],[11,\"class\",\"input-group mb-3\"],[9],[0,\"\\n                \"],[7,\"div\"],[11,\"class\",\"input-group-prepend\"],[9],[0,\"\\n                  \"],[7,\"span\"],[11,\"class\",\"input-group-text\"],[11,\"id\",\"confirm\"],[9],[0,\"  Confirm   \"],[10],[0,\"\\n                \"],[10],[0,\"\\n                \"],[1,[27,\"input\",null,[[\"type\",\"value\",\"class\",\"placeholder\",\"aria-label\",\"aria-describedby\",\"required\"],[\"password\",[23,[\"confirm\"]],\"form-control\",\"•••••••••••\",\"Confirm\",\"confirm\",\"true\"]]],false],[0,\"\\n              \"],[10],[0,\"\\n            \"],[10],[0,\"\\n          \"],[10],[0,\"\\n          \"],[7,\"br\"],[9],[10],[0,\"\\n\"],[0,\"          \"],[7,\"h5\"],[11,\"style\",\"text-align: left; margin-bottom: 20px;\"],[9],[0,\"Personal Information\"],[10],[0,\"\\n          \"],[7,\"div\"],[11,\"class\",\"row\"],[9],[0,\"\\n            \"],[7,\"div\"],[11,\"class\",\"col\"],[9],[0,\"\\n              \"],[7,\"div\"],[11,\"class\",\"input-group mb-3\"],[9],[0,\"\\n                \"],[7,\"div\"],[11,\"class\",\"input-group-prepend\"],[9],[0,\"\\n                  \"],[7,\"span\"],[11,\"class\",\"input-group-text\"],[11,\"id\",\"first\"],[9],[0,\"First Name\"],[10],[0,\"\\n                \"],[10],[0,\"\\n                \"],[1,[27,\"input\",null,[[\"type\",\"value\",\"class\",\"placeholder\",\"aria-label\",\"aria-describedby\",\"required\"],[\"text\",[23,[\"first\"]],\"form-control\",\"John\",\"First\",\"first\",\"true\"]]],false],[0,\"\\n              \"],[10],[0,\"\\n            \"],[10],[0,\"\\n            \"],[7,\"div\"],[11,\"class\",\"col\"],[9],[0,\"\\n              \"],[7,\"div\"],[11,\"class\",\"input-group mb-3\"],[9],[0,\"\\n                \"],[7,\"div\"],[11,\"class\",\"input-group-prepend\"],[9],[0,\"\\n                  \"],[7,\"span\"],[11,\"class\",\"input-group-text\"],[11,\"id\",\"last\"],[9],[0,\"Last Name\"],[10],[0,\"\\n                \"],[10],[0,\"\\n                \"],[1,[27,\"input\",null,[[\"type\",\"value\",\"class\",\"placeholder\",\"aria-label\",\"aria-describedby\",\"required\"],[\"text\",[23,[\"last\"]],\"form-control\",\"Doe\",\"Last\",\"last\",\"true\"]]],false],[0,\"\\n              \"],[10],[0,\"\\n            \"],[10],[0,\"\\n          \"],[10],[0,\"\\n          \"],[7,\"div\"],[11,\"class\",\"row\"],[9],[0,\"\\n            \"],[7,\"div\"],[11,\"class\",\"col\"],[9],[0,\"\\n              \"],[7,\"div\"],[11,\"class\",\"input-group mb-3\"],[9],[0,\"\\n                \"],[7,\"div\"],[11,\"class\",\"input-group-prepend\"],[9],[0,\"\\n                  \"],[7,\"span\"],[11,\"class\",\"input-group-text\"],[11,\"id\",\"address\"],[9],[0,\"  Address  \"],[10],[0,\"\\n                \"],[10],[0,\"\\n                \"],[1,[27,\"input\",null,[[\"type\",\"value\",\"class\",\"placeholder\",\"aria-label\",\"aria-describedby\",\"required\"],[\"text\",[23,[\"address\"]],\"form-control\",\"1234 South Monroe Street\",\"Address\",\"address\",\"true\"]]],false],[0,\"\\n              \"],[10],[0,\"\\n            \"],[10],[0,\"\\n            \"],[7,\"div\"],[11,\"class\",\"col\"],[9],[0,\"\\n              \"],[7,\"div\"],[11,\"class\",\"input-group mb-3\"],[9],[0,\"\\n                \"],[7,\"div\"],[11,\"class\",\"input-group-prepend\"],[9],[0,\"\\n                  \"],[7,\"span\"],[11,\"class\",\"input-group-text\"],[11,\"id\",\"phone\"],[9],[0,\"    Phone    \"],[10],[0,\"\\n                \"],[10],[0,\"\\n                \"],[1,[27,\"input\",null,[[\"type\",\"value\",\"class\",\"placeholder\",\"aria-label\",\"aria-describedby\",\"required\"],[\"tel\",[23,[\"phone\"]],\"form-control\",\"(402) 867-5309\",\"Phone\",\"phone\",\"true\"]]],false],[0,\"\\n              \"],[10],[0,\"\\n            \"],[10],[0,\"\\n          \"],[10],[0,\"\\n          \"],[7,\"br\"],[9],[10],[0,\"\\n\\n          \"],[7,\"div\"],[11,\"class\",\"form-horizontal form-group form-group-lg row\"],[9],[0,\"\\n            \"],[7,\"div\"],[11,\"class\",\"col-xs-10 col-xs-offset-1 col-sm-offset-0 col-sm-4 col-md-3\"],[11,\"style\",\"margin: 0 auto; float: none;\"],[9],[0,\"\\n              \"],[7,\"button\"],[11,\"class\",\"btn btn-primary btn-lg btn-block\"],[11,\"type\",\"button\"],[3,\"action\",[[22,0,[]],\"register\"]],[9],[0,\"Register\"],[10],[0,\"\\n            \"],[10],[0,\"\\n          \"],[10],[0,\"\\n        \"],[10],[0,\"\\n      \"],[10],[0,\"\\n    \"],[10],[0,\"\\n  \"],[10],[0,\"\\n\"],[10]],\"hasEval\":false}", "meta": { "moduleName": "lend-database/templates/register-backup.hbs" } });
+});
 ;define("lend-database/templates/register", ["exports"], function (exports) {
   "use strict";
 
   Object.defineProperty(exports, "__esModule", {
     value: true
   });
-  exports.default = Ember.HTMLBars.template({ "id": "Tn2rpte2", "block": "{\"symbols\":[],\"statements\":[[7,\"div\"],[11,\"class\",\"container\"],[9],[0,\"\\n  \"],[7,\"div\"],[11,\"class\",\"row\"],[9],[0,\"\\n    \"],[7,\"div\"],[11,\"class\",\"col-md-12\"],[9],[0,\"\\n      \"],[7,\"div\"],[11,\"class\",\"jumbotron text-center\"],[9],[0,\"\\n\\n        \"],[7,\"h1\"],[9],[0,\"Register\"],[10],[7,\"br\"],[9],[10],[0,\"\\n        \"],[7,\"p\"],[11,\"style\",\"margin-bottom: 0px;\"],[9],[0,\"Creating an account will allow for you to see the progress of\"],[10],[0,\"\\n        \"],[7,\"p\"],[9],[0,\"orders with the Lending Library, and makes checking out tech much easier.\"],[10],[7,\"br\"],[9],[10],[0,\"\\n\\n        \"],[7,\"form\"],[11,\"class\",\"form-horizontal\"],[9],[0,\"\\n          \"],[7,\"h5\"],[11,\"style\",\"text-align: left; margin-bottom: 20px;\"],[9],[0,\"Login Information\"],[10],[0,\"\\n          \"],[7,\"div\"],[11,\"class\",\"row\"],[9],[0,\"\\n            \"],[7,\"div\"],[11,\"class\",\"col\"],[9],[0,\"\\n              \"],[1,[27,\"validated-input\",null,[[\"model\",\"valuePath\",\"placeholder\",\"didValidate\",\"title\",\"value\"],[[23,[\"model\"]],\"username\",\"JohnDoe1980\",[23,[\"didValidate\"]],\"Username\",[23,[\"username\"]]]]],false],[0,\"\\n            \"],[10],[0,\"\\n            \"],[7,\"div\"],[11,\"class\",\"col\"],[9],[0,\"\\n              \"],[1,[27,\"validated-input\",null,[[\"type\",\"model\",\"valuePath\",\"placeholder\",\"didValidate\",\"title\",\"value\"],[\"email\",[23,[\"model\"]],\"email\",\"JohnDoe@gmail.com\",[23,[\"didValidate\"]],\"Email\",[23,[\"email\"]]]]],false],[0,\"\\n            \"],[10],[0,\"\\n          \"],[10],[0,\"\\n          \"],[7,\"div\"],[11,\"class\",\"row\"],[9],[0,\"\\n            \"],[7,\"div\"],[11,\"class\",\"col\"],[9],[0,\"\\n              \"],[1,[27,\"validated-input\",null,[[\"type\",\"model\",\"valuePath\",\"placeholder\",\"didValidate\",\"title\",\"value\"],[\"password\",[23,[\"model\"]],\"password\",\"•••••••••••\",[23,[\"didValidate\"]],\"Password\",[23,[\"password\"]]]]],false],[0,\"\\n            \"],[10],[0,\"\\n            \"],[7,\"div\"],[11,\"class\",\"col\"],[9],[0,\"\\n              \"],[1,[27,\"validated-input\",null,[[\"type\",\"model\",\"valuePath\",\"placeholder\",\"didValidate\",\"title\"],[\"password\",[23,[\"model\"]],\"passwordConfirmation\",\"•••••••••••\",[23,[\"didValidate\"]],\"Confirm\"]]],false],[0,\"\\n            \"],[10],[0,\"\\n          \"],[10],[0,\"\\n          \"],[7,\"br\"],[9],[10],[0,\"\\n          \"],[7,\"h5\"],[11,\"style\",\"text-align: left; margin-bottom: 20px;\"],[9],[0,\"Personal Information\"],[10],[0,\"\\n          \"],[7,\"div\"],[11,\"class\",\"row\"],[9],[0,\"\\n            \"],[7,\"div\"],[11,\"class\",\"col\"],[9],[0,\"\\n              \"],[1,[27,\"validated-input\",null,[[\"model\",\"valuePath\",\"placeholder\",\"didValidate\",\"title\",\"value\"],[[23,[\"model\"]],\"firstname\",\"John\",[23,[\"didValidate\"]],\"First Name\",[23,[\"first\"]]]]],false],[0,\"\\n            \"],[10],[0,\"\\n            \"],[7,\"div\"],[11,\"class\",\"col\"],[9],[0,\"\\n              \"],[1,[27,\"validated-input\",null,[[\"model\",\"valuePath\",\"placeholder\",\"didValidate\",\"title\",\"value\"],[[23,[\"model\"]],\"lastname\",\"Doe\",[23,[\"didValidate\"]],\"Last Name\",[23,[\"last\"]]]]],false],[0,\"\\n            \"],[10],[0,\"\\n          \"],[10],[0,\"\\n          \"],[7,\"div\"],[11,\"class\",\"row\"],[9],[0,\"\\n            \"],[7,\"div\"],[11,\"class\",\"col\"],[9],[0,\"\\n              \"],[1,[27,\"validated-input\",null,[[\"model\",\"valuePath\",\"placeholder\",\"didValidate\",\"title\",\"value\"],[[23,[\"model\",\"profile\"]],\"address\",\"1234 S. Monroe Street\",[23,[\"didValidate\"]],\"Address\",[23,[\"address\"]]]]],false],[0,\"\\n            \"],[10],[0,\"\\n            \"],[7,\"div\"],[11,\"class\",\"col\"],[9],[0,\"\\n              \"],[1,[27,\"validated-input\",null,[[\"model\",\"valuePath\",\"placeholder\",\"didValidate\",\"title\",\"value\"],[[23,[\"model\",\"profile\"]],\"phonenumber\",\"(402) 867-5309\",[23,[\"didValidate\"]],\"Phone\",[23,[\"phone\"]]]]],false],[0,\"\\n            \"],[10],[0,\"\\n          \"],[10],[0,\"\\n          \"],[7,\"br\"],[9],[10],[0,\"\\n\\n          \"],[7,\"div\"],[11,\"class\",\"form-horizontal form-group form-group-lg row\"],[9],[0,\"\\n            \"],[7,\"div\"],[11,\"class\",\"col-xs-10 col-xs-offset-1 col-sm-offset-0 col-sm-4 col-md-3\"],[11,\"style\",\"margin: 0 auto; float: none;\"],[9],[0,\"\\n              \"],[7,\"button\"],[11,\"class\",\"btn btn-primary btn-lg btn-block\"],[12,\"disabled\",[27,\"get\",[[27,\"get\",[[23,[\"model\"]],\"validations\"],null],\"isInvalid\"],null]],[11,\"type\",\"button\"],[3,\"action\",[[22,0,[]],\"register\"]],[9],[0,\"Register\"],[10],[0,\"\\n            \"],[10],[0,\"\\n          \"],[10],[0,\"\\n        \"],[10],[0,\"\\n      \"],[10],[0,\"\\n    \"],[10],[0,\"\\n  \"],[10],[0,\"\\n\"],[10]],\"hasEval\":false}", "meta": { "moduleName": "lend-database/templates/register.hbs" } });
-});
-;define("lend-database/templates/register2", ["exports"], function (exports) {
-  "use strict";
-
-  Object.defineProperty(exports, "__esModule", {
-    value: true
-  });
-  exports.default = Ember.HTMLBars.template({ "id": "1Cr6lUur", "block": "{\"symbols\":[],\"statements\":[[7,\"div\"],[11,\"class\",\"container\"],[9],[0,\"\\n  \"],[7,\"div\"],[11,\"class\",\"row\"],[9],[0,\"\\n\"],[0,\"    \"],[7,\"div\"],[11,\"class\",\"col-md-12\"],[9],[0,\"\\n      \"],[7,\"div\"],[11,\"class\",\"jumbotron text-center\"],[9],[0,\"\\n\\n        \"],[7,\"h1\"],[9],[0,\"Register\"],[10],[7,\"br\"],[9],[10],[0,\"\\n        \"],[7,\"p\"],[11,\"style\",\"margin-bottom: 0px;\"],[9],[0,\"Creating an account will allow for you to see the progress of\"],[10],[0,\"\\n        \"],[7,\"p\"],[9],[0,\"orders with the Lending Library, and makes checking out tech much easier.\"],[10],[7,\"br\"],[9],[10],[0,\"\\n\\n        \"],[7,\"form\"],[11,\"class\",\"form-horizontal\"],[9],[0,\"\\n          \"],[7,\"h5\"],[11,\"style\",\"text-align: left; margin-bottom: 20px;\"],[9],[0,\"Login Information\"],[10],[0,\"\\n          \"],[7,\"div\"],[11,\"class\",\"row\"],[9],[0,\"\\n            \"],[7,\"div\"],[11,\"class\",\"col\"],[9],[0,\"\\n              \"],[7,\"div\"],[11,\"class\",\"input-group mb-3\"],[9],[0,\"\\n                \"],[7,\"div\"],[11,\"class\",\"input-group-prepend\"],[9],[0,\"\\n                  \"],[7,\"span\"],[11,\"class\",\"input-group-text\"],[11,\"id\",\"username\"],[9],[0,\" Username \"],[10],[0,\"\\n                \"],[10],[0,\"\\n                \"],[1,[27,\"input\",null,[[\"type\",\"value\",\"class\",\"placeholder\",\"aria-label\",\"aria-describedby\",\"required\"],[\"text\",[23,[\"username\"]],\"form-control\",\"JohnDoe1970\",\"Username\",\"username\",\"true\"]]],false],[0,\"\\n              \"],[10],[0,\"\\n            \"],[10],[0,\"\\n            \"],[7,\"div\"],[11,\"class\",\"col\"],[9],[0,\"\\n              \"],[7,\"div\"],[11,\"class\",\"input-group mb-3\"],[9],[0,\"\\n                \"],[7,\"div\"],[11,\"class\",\"input-group-prepend\"],[9],[0,\"\\n                  \"],[7,\"span\"],[11,\"class\",\"input-group-text\"],[11,\"id\",\"email\"],[9],[0,\"     Email    \"],[10],[0,\"\\n                \"],[10],[0,\"\\n                \"],[1,[27,\"input\",null,[[\"type\",\"value\",\"class\",\"placeholder\",\"aria-label\",\"aria-describedby\",\"required\"],[\"text\",[23,[\"email\"]],\"form-control\",\"JohnDoe@gmail.com\",\"Email\",\"email\",\"true\"]]],false],[0,\"\\n              \"],[10],[0,\"\\n            \"],[10],[0,\"\\n          \"],[10],[0,\"\\n          \"],[7,\"div\"],[11,\"class\",\"row\"],[9],[0,\"\\n            \"],[7,\"div\"],[11,\"class\",\"col\"],[9],[0,\"\\n              \"],[7,\"div\"],[11,\"class\",\"input-group mb-3\"],[9],[0,\"\\n                \"],[7,\"div\"],[11,\"class\",\"input-group-prepend\"],[9],[0,\"\\n                  \"],[7,\"span\"],[11,\"class\",\"input-group-text\"],[11,\"id\",\"password\"],[9],[0,\"  Password \"],[10],[0,\"\\n                \"],[10],[0,\"\\n                \"],[1,[27,\"input\",null,[[\"type\",\"value\",\"class\",\"placeholder\",\"aria-label\",\"aria-describedby\",\"required\"],[\"password\",[23,[\"password\"]],\"form-control\",\"•••••••••••\",\"Password\",\"password\",\"true\"]]],false],[0,\"\\n              \"],[10],[0,\"\\n            \"],[10],[0,\"\\n            \"],[7,\"div\"],[11,\"class\",\"col\"],[9],[0,\"\\n              \"],[7,\"div\"],[11,\"class\",\"input-group mb-3\"],[9],[0,\"\\n                \"],[7,\"div\"],[11,\"class\",\"input-group-prepend\"],[9],[0,\"\\n                  \"],[7,\"span\"],[11,\"class\",\"input-group-text\"],[11,\"id\",\"confirm\"],[9],[0,\"  Confirm   \"],[10],[0,\"\\n                \"],[10],[0,\"\\n                \"],[1,[27,\"input\",null,[[\"type\",\"value\",\"class\",\"placeholder\",\"aria-label\",\"aria-describedby\",\"required\"],[\"password\",[23,[\"confirm\"]],\"form-control\",\"•••••••••••\",\"Confirm\",\"confirm\",\"true\"]]],false],[0,\"\\n              \"],[10],[0,\"\\n            \"],[10],[0,\"\\n          \"],[10],[0,\"\\n          \"],[7,\"br\"],[9],[10],[0,\"\\n\"],[0,\"          \"],[7,\"h5\"],[11,\"style\",\"text-align: left; margin-bottom: 20px;\"],[9],[0,\"Personal Information\"],[10],[0,\"\\n          \"],[7,\"div\"],[11,\"class\",\"row\"],[9],[0,\"\\n            \"],[7,\"div\"],[11,\"class\",\"col\"],[9],[0,\"\\n              \"],[7,\"div\"],[11,\"class\",\"input-group mb-3\"],[9],[0,\"\\n                \"],[7,\"div\"],[11,\"class\",\"input-group-prepend\"],[9],[0,\"\\n                  \"],[7,\"span\"],[11,\"class\",\"input-group-text\"],[11,\"id\",\"first\"],[9],[0,\"First Name\"],[10],[0,\"\\n                \"],[10],[0,\"\\n                \"],[1,[27,\"input\",null,[[\"type\",\"value\",\"class\",\"placeholder\",\"aria-label\",\"aria-describedby\",\"required\"],[\"text\",[23,[\"first\"]],\"form-control\",\"John\",\"First\",\"first\",\"true\"]]],false],[0,\"\\n              \"],[10],[0,\"\\n            \"],[10],[0,\"\\n            \"],[7,\"div\"],[11,\"class\",\"col\"],[9],[0,\"\\n              \"],[7,\"div\"],[11,\"class\",\"input-group mb-3\"],[9],[0,\"\\n                \"],[7,\"div\"],[11,\"class\",\"input-group-prepend\"],[9],[0,\"\\n                  \"],[7,\"span\"],[11,\"class\",\"input-group-text\"],[11,\"id\",\"last\"],[9],[0,\"Last Name\"],[10],[0,\"\\n                \"],[10],[0,\"\\n                \"],[1,[27,\"input\",null,[[\"type\",\"value\",\"class\",\"placeholder\",\"aria-label\",\"aria-describedby\",\"required\"],[\"text\",[23,[\"last\"]],\"form-control\",\"Doe\",\"Last\",\"last\",\"true\"]]],false],[0,\"\\n              \"],[10],[0,\"\\n            \"],[10],[0,\"\\n          \"],[10],[0,\"\\n          \"],[7,\"div\"],[11,\"class\",\"row\"],[9],[0,\"\\n            \"],[7,\"div\"],[11,\"class\",\"col\"],[9],[0,\"\\n              \"],[7,\"div\"],[11,\"class\",\"input-group mb-3\"],[9],[0,\"\\n                \"],[7,\"div\"],[11,\"class\",\"input-group-prepend\"],[9],[0,\"\\n                  \"],[7,\"span\"],[11,\"class\",\"input-group-text\"],[11,\"id\",\"address\"],[9],[0,\"  Address  \"],[10],[0,\"\\n                \"],[10],[0,\"\\n                \"],[1,[27,\"input\",null,[[\"type\",\"value\",\"class\",\"placeholder\",\"aria-label\",\"aria-describedby\",\"required\"],[\"text\",[23,[\"address\"]],\"form-control\",\"1234 South Monroe Street\",\"Address\",\"address\",\"true\"]]],false],[0,\"\\n              \"],[10],[0,\"\\n            \"],[10],[0,\"\\n            \"],[7,\"div\"],[11,\"class\",\"col\"],[9],[0,\"\\n              \"],[7,\"div\"],[11,\"class\",\"input-group mb-3\"],[9],[0,\"\\n                \"],[7,\"div\"],[11,\"class\",\"input-group-prepend\"],[9],[0,\"\\n                  \"],[7,\"span\"],[11,\"class\",\"input-group-text\"],[11,\"id\",\"phone\"],[9],[0,\"    Phone    \"],[10],[0,\"\\n                \"],[10],[0,\"\\n                \"],[1,[27,\"input\",null,[[\"type\",\"value\",\"class\",\"placeholder\",\"aria-label\",\"aria-describedby\",\"required\"],[\"tel\",[23,[\"phone\"]],\"form-control\",\"(402) 867-5309\",\"Phone\",\"phone\",\"true\"]]],false],[0,\"\\n              \"],[10],[0,\"\\n            \"],[10],[0,\"\\n          \"],[10],[0,\"\\n          \"],[7,\"br\"],[9],[10],[0,\"\\n\\n          \"],[7,\"div\"],[11,\"class\",\"form-horizontal form-group form-group-lg row\"],[9],[0,\"\\n            \"],[7,\"div\"],[11,\"class\",\"col-xs-10 col-xs-offset-1 col-sm-offset-0 col-sm-4 col-md-3\"],[11,\"style\",\"margin: 0 auto; float: none;\"],[9],[0,\"\\n              \"],[7,\"button\"],[11,\"class\",\"btn btn-primary btn-lg btn-block\"],[11,\"type\",\"button\"],[3,\"action\",[[22,0,[]],\"register\"]],[9],[0,\"Register\"],[10],[0,\"\\n            \"],[10],[0,\"\\n          \"],[10],[0,\"\\n        \"],[10],[0,\"\\n      \"],[10],[0,\"\\n    \"],[10],[0,\"\\n  \"],[10],[0,\"\\n\"],[10]],\"hasEval\":false}", "meta": { "moduleName": "lend-database/templates/register2.hbs" } });
+  exports.default = Ember.HTMLBars.template({ "id": "/wUxRig4", "block": "{\"symbols\":[],\"statements\":[[7,\"div\"],[11,\"class\",\"container\"],[9],[0,\"\\n  \"],[7,\"div\"],[11,\"class\",\"row\"],[9],[0,\"\\n    \"],[7,\"div\"],[11,\"class\",\"col-md-12\"],[9],[0,\"\\n      \"],[7,\"div\"],[11,\"class\",\"jumbotron text-center\"],[9],[0,\"\\n\\n        \"],[7,\"h1\"],[9],[0,\"Register\"],[10],[7,\"br\"],[9],[10],[0,\"\\n        \"],[7,\"p\"],[11,\"style\",\"margin-bottom: 0px;\"],[9],[0,\"Creating an account will allow for you to see the progress of\"],[10],[0,\"\\n        \"],[7,\"p\"],[9],[0,\"orders with the Lending Library, and makes checking out tech much easier.\"],[10],[7,\"br\"],[9],[10],[0,\"\\n\\n\"],[4,\"if\",[[23,[\"showAlert\"]]],null,{\"statements\":[[0,\"          \"],[7,\"div\"],[11,\"class\",\"alert alert-danger\"],[11,\"id\",\"danger-alert\"],[9],[0,\"\\n            \"],[7,\"button\"],[11,\"class\",\"close\"],[11,\"data-dismiss\",\"alert\"],[11,\"type\",\"button\"],[3,\"action\",[[22,0,[]],\"hide\"]],[9],[0,\"x\"],[10],[0,\"\\n            \"],[7,\"strong\"],[9],[0,\"Error! \"],[10],[0,\"\\n            \"],[1,[22,0,[\"validationErrorMsg\"]],false],[0,\"\\n          \"],[10],[0,\"\\n\\n\"]],\"parameters\":[]},null],[0,\"\\n        \"],[7,\"form\"],[11,\"class\",\"form-horizontal\"],[9],[0,\"\\n          \"],[7,\"h5\"],[11,\"style\",\"text-align: left; margin-bottom: 20px;\"],[9],[0,\"Login Information\"],[10],[0,\"\\n          \"],[7,\"div\"],[11,\"class\",\"row\"],[9],[0,\"\\n            \"],[7,\"div\"],[11,\"class\",\"col\"],[9],[0,\"\\n              \"],[1,[27,\"validated-input\",null,[[\"model\",\"valuePath\",\"placeholder\",\"didValidate\",\"title\",\"value\"],[[23,[\"model\"]],\"username\",\"JohnDoe1980\",[23,[\"didValidate\"]],\"Username\",[23,[\"username\"]]]]],false],[0,\"\\n            \"],[10],[0,\"\\n            \"],[7,\"div\"],[11,\"class\",\"col\"],[9],[0,\"\\n              \"],[1,[27,\"validated-input\",null,[[\"type\",\"model\",\"valuePath\",\"placeholder\",\"didValidate\",\"title\",\"value\"],[\"email\",[23,[\"model\"]],\"email\",\"JohnDoe@gmail.com\",[23,[\"didValidate\"]],\"Email\",[23,[\"email\"]]]]],false],[0,\"\\n            \"],[10],[0,\"\\n          \"],[10],[0,\"\\n          \"],[7,\"div\"],[11,\"class\",\"row\"],[9],[0,\"\\n            \"],[7,\"div\"],[11,\"class\",\"col\"],[9],[0,\"\\n              \"],[1,[27,\"validated-input\",null,[[\"type\",\"model\",\"valuePath\",\"placeholder\",\"didValidate\",\"title\",\"value\"],[\"password\",[23,[\"model\"]],\"password\",\"•••••••••••\",[23,[\"didValidate\"]],\"Password\",[23,[\"password\"]]]]],false],[0,\"\\n            \"],[10],[0,\"\\n            \"],[7,\"div\"],[11,\"class\",\"col\"],[9],[0,\"\\n              \"],[1,[27,\"validated-input\",null,[[\"type\",\"model\",\"valuePath\",\"placeholder\",\"didValidate\",\"title\"],[\"password\",[23,[\"model\"]],\"passwordConfirmation\",\"•••••••••••\",[23,[\"didValidate\"]],\"Confirm\"]]],false],[0,\"\\n            \"],[10],[0,\"\\n          \"],[10],[0,\"\\n          \"],[7,\"br\"],[9],[10],[0,\"\\n          \"],[7,\"h5\"],[11,\"style\",\"text-align: left; margin-bottom: 20px;\"],[9],[0,\"Personal Information\"],[10],[0,\"\\n          \"],[7,\"div\"],[11,\"class\",\"row\"],[9],[0,\"\\n            \"],[7,\"div\"],[11,\"class\",\"col\"],[9],[0,\"\\n              \"],[1,[27,\"validated-input\",null,[[\"model\",\"valuePath\",\"placeholder\",\"didValidate\",\"title\",\"value\"],[[23,[\"model\"]],\"firstname\",\"John\",[23,[\"didValidate\"]],\"First Name\",[23,[\"first\"]]]]],false],[0,\"\\n            \"],[10],[0,\"\\n            \"],[7,\"div\"],[11,\"class\",\"col\"],[9],[0,\"\\n              \"],[1,[27,\"validated-input\",null,[[\"model\",\"valuePath\",\"placeholder\",\"didValidate\",\"title\",\"value\"],[[23,[\"model\"]],\"lastname\",\"Doe\",[23,[\"didValidate\"]],\"Last Name\",[23,[\"last\"]]]]],false],[0,\"\\n            \"],[10],[0,\"\\n          \"],[10],[0,\"\\n          \"],[7,\"div\"],[11,\"class\",\"row\"],[9],[0,\"\\n            \"],[7,\"div\"],[11,\"class\",\"col\"],[9],[0,\"\\n              \"],[1,[27,\"validated-input\",null,[[\"model\",\"valuePath\",\"placeholder\",\"didValidate\",\"title\",\"value\"],[[23,[\"model\",\"profile\"]],\"address\",\"1234 S. Monroe Street\",[23,[\"didValidate\"]],\"Address\",[23,[\"address\"]]]]],false],[0,\"\\n            \"],[10],[0,\"\\n            \"],[7,\"div\"],[11,\"class\",\"col\"],[9],[0,\"\\n              \"],[1,[27,\"validated-input\",null,[[\"model\",\"valuePath\",\"placeholder\",\"didValidate\",\"title\",\"value\"],[[23,[\"model\",\"profile\"]],\"phonenumber\",\"(402) 867-5309\",[23,[\"didValidate\"]],\"Phone\",[23,[\"phone\"]]]]],false],[0,\"\\n            \"],[10],[0,\"\\n          \"],[10],[0,\"\\n          \"],[7,\"br\"],[9],[10],[0,\"\\n\\n          \"],[7,\"div\"],[11,\"class\",\"form-horizontal form-group form-group-lg row\"],[9],[0,\"\\n            \"],[7,\"div\"],[11,\"class\",\"col-xs-10 col-xs-offset-1 col-sm-offset-0 col-sm-4 col-md-3\"],[11,\"style\",\"margin: 0 auto; float: none;\"],[9],[0,\"\\n              \"],[7,\"button\"],[11,\"class\",\"btn btn-primary btn-lg btn-block\"],[12,\"disabled\",[27,\"get\",[[27,\"get\",[[23,[\"model\"]],\"validations\"],null],\"isInvalid\"],null]],[11,\"type\",\"button\"],[3,\"action\",[[22,0,[]],\"register\"]],[9],[0,\"Register\"],[10],[0,\"\\n            \"],[10],[0,\"\\n          \"],[10],[0,\"\\n        \"],[10],[0,\"\\n      \"],[10],[0,\"\\n    \"],[10],[0,\"\\n  \"],[10],[0,\"\\n\"],[10]],\"hasEval\":false}", "meta": { "moduleName": "lend-database/templates/register.hbs" } });
 });
 ;define("lend-database/templates/return/index", ["exports"], function (exports) {
   "use strict";
@@ -3800,7 +3999,7 @@
   Object.defineProperty(exports, "__esModule", {
     value: true
   });
-  exports.default = Ember.HTMLBars.template({ "id": "AWJk54iM", "block": "{\"symbols\":[\"tickets\",\"ticket\"],\"statements\":[[7,\"div\"],[11,\"class\",\"container\"],[9],[0,\"\\n    \"],[7,\"div\"],[11,\"class\",\"row\"],[9],[0,\"\\n        \"],[7,\"div\"],[11,\"class\",\"col-md-12\"],[9],[0,\"\\n            \"],[1,[21,\"outlet\"],false],[0,\"\\n\\n            \"],[7,\"div\"],[11,\"class\",\"jumbotron text-center\"],[9],[0,\"\\n                \"],[7,\"h1\"],[9],[0,\"Return Items\"],[10],[0,\"\\n\\n                \"],[7,\"nav\"],[11,\"aria-label\",\"breadcrumb\"],[11,\"style\",\"margin-bottom: -60px;\"],[9],[0,\"\\n                    \"],[7,\"ol\"],[11,\"class\",\"breadcrumb\"],[9],[0,\"\\n                        \"],[7,\"li\"],[11,\"class\",\"breadcrumb-item\"],[9],[4,\"link-to\",[\"dashboard\"],null,{\"statements\":[[0,\"Home\"]],\"parameters\":[]},null],[10],[0,\"\\n                        \"],[7,\"li\"],[11,\"class\",\"breadcrumb-item active\"],[11,\"aria-current\",\"page\"],[9],[0,\"Returns\"],[10],[0,\"\\n                    \"],[10],[0,\"\\n                \"],[10],[0,\"\\n            \"],[10],[0,\"\\n\\n\"],[4,\"if\",[[23,[\"filteredCheckouts\",\"length\"]]],null,{\"statements\":[[0,\"\\n\"],[4,\"list-pagination\",null,[[\"paginateBy\",\"items\"],[12,[23,[\"filteredCheckouts\"]]]],{\"statements\":[[0,\"                    \"],[7,\"div\"],[11,\"class\",\"row\"],[9],[0,\"\\n\"],[4,\"each\",[[22,1,[]]],null,{\"statements\":[[0,\"                        \"],[7,\"div\"],[11,\"class\",\"col-lg-4 col-md-6 mb-4\"],[9],[0,\"\\n                            \"],[7,\"div\"],[11,\"class\",\"card text-center h-100\"],[9],[0,\"\\n                                \"],[7,\"div\"],[11,\"class\",\"card-body\"],[9],[0,\"\\n                                    \"],[7,\"h5\"],[11,\"class\",\"card-title\"],[9],[1,[22,2,[\"firstname\"]],false],[0,\" \"],[1,[22,2,[\"lastname\"]],false],[10],[0,\"\\n                                    \"],[7,\"p\"],[11,\"class\",\"card-text\"],[9],[7,\"strong\"],[9],[0,\"Ordered on: \"],[10],[1,[27,\"moment-format\",[[22,2,[\"createdon\"]],\"dddd, MMMM Do, YYYY\"],null],false],[10],[0,\"\\n                                    \"],[7,\"p\"],[11,\"class\",\"card-text\"],[9],[1,[22,2,[\"items\",\"length\"]],false],[0,\" items\"],[10],[0,\"\\n\"],[4,\"link-to\",[\"return.return-items\",[22,2,[]]],null,{\"statements\":[[0,\"                                        \"],[7,\"a\"],[11,\"class\",\"btn btn-primary\"],[11,\"style\",\"color: white;\"],[9],[0,\"Return Items\"],[10],[0,\"\\n\"]],\"parameters\":[]},null],[0,\"                                    \\n                                \"],[10],[0,\"\\n                            \"],[10],[0,\"\\n                        \"],[10],[0,\"\\n\"]],\"parameters\":[2]},null],[0,\"                    \"],[10],[0,\"\\n\"]],\"parameters\":[1]},null],[0,\"\\n\"]],\"parameters\":[]},{\"statements\":[[0,\"                \"],[7,\"center\"],[11,\"style\",\"margin-top: 10vh;\"],[9],[0,\"\\n                    \"],[7,\"p\"],[9],[0,\"There are currently no currently checked out items to be returned.\"],[10],[0,\" \\n                    \"],[7,\"p\"],[9],[0,\"To manage a past order, head to the \"],[4,\"link-to\",[\"manage.index\"],null,{\"statements\":[[0,\"manage orders\"]],\"parameters\":[]},null],[0,\" section to viewand modify past and present orders.\"],[10],[0,\"\\n                \"],[10],[0,\"\\n\"]],\"parameters\":[]}],[0,\"\\n        \"],[10],[0,\"\\n    \"],[10],[0,\"\\n\"],[10],[0,\"\\n\\n\\n\\n\"],[0,\"                                         \\n\\n\"]],\"hasEval\":false}", "meta": { "moduleName": "lend-database/templates/return/index.hbs" } });
+  exports.default = Ember.HTMLBars.template({ "id": "qlvUsUsh", "block": "{\"symbols\":[\"tickets\",\"ticket\"],\"statements\":[[7,\"div\"],[11,\"class\",\"container\"],[9],[0,\"\\n    \"],[7,\"div\"],[11,\"class\",\"row\"],[9],[0,\"\\n        \"],[7,\"div\"],[11,\"class\",\"col-md-12\"],[9],[0,\"\\n            \"],[1,[21,\"outlet\"],false],[0,\"\\n\\n            \"],[7,\"div\"],[11,\"class\",\"jumbotron text-center\"],[9],[0,\"\\n                \"],[7,\"h1\"],[9],[0,\"Return Items\"],[10],[0,\"\\n\\n                \"],[7,\"nav\"],[11,\"aria-label\",\"breadcrumb\"],[11,\"style\",\"margin-bottom: -60px;\"],[9],[0,\"\\n                    \"],[7,\"ol\"],[11,\"class\",\"breadcrumb\"],[9],[0,\"\\n                        \"],[7,\"li\"],[11,\"class\",\"breadcrumb-item\"],[9],[4,\"link-to\",[\"dashboard\"],null,{\"statements\":[[0,\"Home\"]],\"parameters\":[]},null],[10],[0,\"\\n                        \"],[7,\"li\"],[11,\"class\",\"breadcrumb-item active\"],[11,\"aria-current\",\"page\"],[9],[0,\"Returns\"],[10],[0,\"\\n                    \"],[10],[0,\"\\n                \"],[10],[0,\"\\n            \"],[10],[0,\"\\n\\n\"],[4,\"if\",[[23,[\"filteredCheckouts\",\"length\"]]],null,{\"statements\":[[0,\"\\n\"],[4,\"list-pagination\",null,[[\"paginateBy\",\"items\"],[12,[23,[\"filteredCheckouts\"]]]],{\"statements\":[[0,\"                    \"],[7,\"div\"],[11,\"class\",\"row\"],[9],[0,\"\\n\"],[4,\"each\",[[22,1,[]]],null,{\"statements\":[[0,\"                        \"],[1,[27,\"log\",[[22,2,[]]],null],false],[0,\" \\n                        \"],[7,\"div\"],[11,\"class\",\"col-lg-4 col-md-6 mb-4\"],[9],[0,\"\\n                            \"],[7,\"div\"],[11,\"class\",\"card text-center h-100\"],[9],[0,\"\\n                                \"],[7,\"div\"],[11,\"class\",\"card-body\"],[9],[0,\"\\n                                    \"],[7,\"h5\"],[11,\"class\",\"card-title\"],[9],[1,[22,2,[\"firstname\"]],false],[0,\" \"],[1,[22,2,[\"lastname\"]],false],[10],[0,\"\\n                                    \"],[7,\"p\"],[11,\"class\",\"card-text\"],[9],[7,\"strong\"],[9],[0,\"Ordered on: \"],[10],[1,[27,\"moment-format\",[[22,2,[\"createdon\"]],\"dddd, MMMM Do, YYYY\"],null],false],[10],[0,\"\\n                                    \"],[7,\"p\"],[11,\"class\",\"card-text\"],[9],[1,[22,2,[\"items\",\"length\"]],false],[0,\" items\"],[10],[0,\"\\n\"],[4,\"link-to\",[\"return.return-items\",[22,2,[]]],null,{\"statements\":[[0,\"                                        \"],[7,\"a\"],[11,\"class\",\"btn btn-primary\"],[11,\"style\",\"color: white;\"],[9],[0,\"Return Items\"],[10],[0,\"\\n\"]],\"parameters\":[]},null],[0,\"                                    \\n                                \"],[10],[0,\"\\n                            \"],[10],[0,\"\\n                        \"],[10],[0,\"\\n\"]],\"parameters\":[2]},null],[0,\"                    \"],[10],[0,\"\\n\"]],\"parameters\":[1]},null],[0,\"\\n\"]],\"parameters\":[]},{\"statements\":[[0,\"                \"],[7,\"center\"],[11,\"style\",\"margin-top: 10vh;\"],[9],[0,\"\\n                    \"],[7,\"p\"],[9],[0,\"There are currently no currently checked out items to be returned.\"],[10],[0,\" \\n                    \"],[7,\"p\"],[9],[0,\"To manage a past order, head to the \"],[4,\"link-to\",[\"manage.index\"],null,{\"statements\":[[0,\"manage orders\"]],\"parameters\":[]},null],[0,\" section to viewand modify past and present orders.\"],[10],[0,\"\\n                \"],[10],[0,\"\\n\"]],\"parameters\":[]}],[0,\"\\n        \"],[10],[0,\"\\n    \"],[10],[0,\"\\n\"],[10],[0,\"\\n\\n\\n\\n\"],[0,\"                                         \\n\\n\"]],\"hasEval\":false}", "meta": { "moduleName": "lend-database/templates/return/index.hbs" } });
 });
 ;define("lend-database/templates/return/return-items", ["exports"], function (exports) {
   "use strict";
@@ -4066,7 +4265,7 @@ catch(err) {
 
 ;
           if (!runningTests) {
-            require("lend-database/app")["default"].create({"name":"lend-database","version":"0.0.0+2d544172"});
+            require("lend-database/app")["default"].create({"name":"lend-database","version":"0.0.0+17890cee"});
           }
         
 //# sourceMappingURL=lend-database.map

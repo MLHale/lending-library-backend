@@ -468,7 +468,7 @@ class Register(APIView):
 			elif User.objects.filter(email=email).exists():
 			    return Response({'email': 'Email is taken.', 'status': 'error'})
 			# especially before you pass them in here
-			newuser = User.objects.create_user(email=email, username=username, password=password, lastname=bleach.clean(lastname), firstname=bleach.clean(firstname))
+			newuser = User.objects.create_user(email=email, username=username, password=password, last_name=bleach.clean(lastname), first_name=bleach.clean(firstname))
  
 			newprofile = api.Profile(user=newuser, address=address, phonenumber=phone)
 
@@ -486,7 +486,7 @@ class Register(APIView):
 			#     # cc=['cc@example.com'],
 			#     # bcc=['bcc@example.com'],
 			# )
-			return Response({'status': 'success', 'userid': newuser.id, 'profile': newprofile.user})
+			return Response({'status': 'success', 'userid': newuser.id, 'profile': newprofile.id})
 		else:
 			return Response({'status': 'error'})
 
