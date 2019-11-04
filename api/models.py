@@ -12,6 +12,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from rest_framework_json_api import serializers
 from django.core.validators import *
+from rest_framework.validators import UniqueValidator
 
 
 
@@ -123,7 +124,6 @@ class Item(models.Model):
     class JSONAPIMeta:
         resource_name = "items"
 
-
 class UserSerializer(serializers.ModelSerializer):
     lastname = serializers.CharField(source='last_name')
     firstname = serializers.CharField(source='first_name')
@@ -134,7 +134,6 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ('id', 'username', 'lastname',
                   'firstname', 'email', 'issuperuser')
-
 
 class ProfileSerializer(serializers.ModelSerializer):
     included_serializers = {
