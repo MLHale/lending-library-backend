@@ -19,11 +19,8 @@ from django.conf import settings
 
 #REST API routes
 router = routers.DefaultRouter(trailing_slash=False)
-# router.register(r'users', controllers.UserViewSet)
-# router.register(r'profiles', controllers.ProfileViewSet)
 router.register(r'users', controllers.UserViewSet)
 router.register(r'profiles', controllers.ProfileViewSet)
-# router.register(r'sources', controllers.SourceViewSet)
 router.register(r'checkouts', controllers.CheckoutViewSet)
 router.register(r'items', controllers.ItemViewSet)
 router.register(r'itemtypes', controllers.ItemTypeViewSet)

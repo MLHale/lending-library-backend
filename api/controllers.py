@@ -10,7 +10,8 @@
 # Handy Django Functions
 from django.shortcuts import get_object_or_404, render
 from django.contrib.auth import authenticate, login, logout
-import datetime, pytz
+import datetime
+import pytz
 
 # Models and serializers
 from django.contrib.auth.models import User
@@ -25,16 +26,15 @@ from rest_framework import status
 from rest_framework.renderers import JSONRenderer
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.decorators import action
-
-
-
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.decorators import list_route
 from rest_framework.authentication import *
-#email
+
+from rest_framework.parsers import JSONParser
+
+# Email
 from templated_email import send_templated_mail
-# filters
-# from filters.mixins import *
+
 
 from api.pagination import *
 
@@ -46,491 +46,373 @@ from api.models import Category
 from django.db.models import Count
 
 import bleach
+import time
+
+# For category Image
+import base64
+from django.core.files.base import ContentFile
 
 
 def home(request):
-	"""
-	Send requests to '/' to the ember.js clientside app
-	"""
+    """
+    Send requests to '/' to the ember.js clientside app
+    """
 
-	return render(request, 'index.html')
+    return render(request, 'index.html')
+
 
 def staff_or_401(request):
     if not request.user.is_staff:
-        return Response({'success': False},status=status.HTTP_401_UNAUTHORIZED)
+        return Response({'success': False}, status=status.HTTP_401_UNAUTHORIZED)
+
 
 def super_user_or_401(request):
     if not request.user.is_superuser:
-        return Response({'success': False},status=status.HTTP_401_UNAUTHORIZED)
+        return Response({'success': False}, status=status.HTTP_401_UNAUTHORIZED)
+
 
 def admin_or_401(request):
     if not (request.user.is_staff or request.user.is_superuser):
-        return Response({'success': False},status=status.HTTP_401_UNAUTHORIZED)
+        return Response({'success': False}, status=status.HTTP_401_UNAUTHORIZED)
+
 
 class CheckoutViewSet(viewsets.ModelViewSet):
-	"""
-	Endpoint that loads the people checking out the Items
-	"""
-	permission_classes = (AllowAny,)
-	resource_name = 'checkouts'
-	queryset = api.Checkout.objects.all()
-	serializer_class = api.CheckoutSerializer
-	filter_fields = ('id', 'firstname', 'lastname')
+    """
+    Endpoint that loads the people checking out the Items
+    """
+    permission_classes = (AllowAny,)
+    resource_name = 'checkouts'
+    queryset = api.Checkout.objects.all()
+    serializer_class = api.CheckoutSerializer
+    filter_fields = ('id', 'firstname', 'lastname', 'profile', 'createdon', 'fulfilledon', 'returnedon')
 
-	def create(self, request):
-		admin_or_401(request)
+    def create(self, request):
+        serializer = api.CheckoutSerializer(data=request.data)
+        if serializer.is_valid():
+            checkout = serializer.save()
+            
+            # TODO: Add order information to email
+            # TODO: It doesnt work because the patch request to items goes out after checkout is saved and email goes out on checkout save
 
-		serializer = api.CheckoutSerializer(data=request.data)
-		if not serializer.is_valid():
-			return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            # Send order placed email
+            send_templated_mail(
+                template_name='order-placed',
+                from_email='unolendinglibrary@gmail.com',
+                recipient_list=[request.data.get('email')],
+                context={
+                    'account': (request.data.get('profile') is not None),
+                    'ordernumber': checkout.id,
+                    'domain': 'http://localhost/'
+                },
+            )
 
-		serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-		return Response(serializer.data)
+    def update(self, request, *args, **kwargs):
+        admin_or_401(request)
 
-	def update(self, request, *args, **kwargs):
-		admin_or_401(request)
+        # Get the checkout before it updates to check differences
+        checkout = api.Checkout.objects.get(pk=request.data.get('id'))
 
-		partial = kwargs.pop('partial', False)
-		instance = self.get_object()
-		serializer = self.get_serializer(instance, data=request.data, partial=partial)
-		serializer.is_valid(raise_exception=True)
-		self.perform_update(serializer)
+        if checkout.fulfilledon == None and request.data.get('fulfilledon') is not None:
+            # The order was just fulfilled
+            # Send order fulfilled email
+            send_templated_mail(
+                template_name='order-fulfilled',
+                from_email='unolendinglibrary@gmail.com',
+                recipient_list=[checkout.email],
+                context={
+               		'ordernumber': checkout.id,
+                },
+            )
 
-		if getattr(instance, '_prefetched_objects_cache', None):
-			instance._prefetched_objects_cache = {}
+        if checkout.returnedon == None and request.data.get('returnedon') is not None:
+            # The order was just returned
+            # Send order fulfilled email
+            send_templated_mail(
+                template_name='order-returned',
+                from_email='unolendinglibrary@gmail.com',
+                recipient_list=[checkout.email],
+                context={
+					'ordernumber': checkout.id,
+                },
+            )
 
-		# serializer = api.CheckoutSerializer(data=request.data)
-		# if not serializer.is_valid():
-		# 	return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer = self.get_serializer(self.get_object(), data=request.data, partial=kwargs.pop('partial', False))
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
-		# serializer.save()
-
-		return Response(serializer.data)
-
-	# def partial_update(self, request, pk=None):
-    #     partial = kwargs.pop('partial', False)
-    #     instance = self.get_object()
-    #     serializer = self.get_serializer(instance, data=request.data, partial=partial)
-    #     serializer.is_valid(raise_exception=True)
-    #     self.perform_update(serializer)
-
-    #     if getattr(instance, '_prefetched_objects_cache', None):
-    #         # If 'prefetch_related' has been applied to a queryset, we need to
-    #         # forcibly invalidate the prefetch cache on the instance.
-    #         instance._prefetched_objects_cache = {}
-
-    #     return Response(serializer.data)
 
 class ItemViewSet(viewsets.ModelViewSet):
-	"""
-	Endpoint to view the items
-	"""
-	resource_name = 'items'
-	serializer_class = api.ItemSerializer
-	queryset = api.Item.objects.all()
-	permission_classes = (AllowAny,)
-	filter_fileds = ('id', 'itemtype', 'owner', 'checkedoutto')
+    """
+    Endpoint to view the items
+    """
+    resource_name = 'items'
+    serializer_class = api.ItemSerializer
+    queryset = api.Item.objects.all()
+    permission_classes = (AllowAny,)
+    filter_fields = ('id', 'itemtype', 'owner', 'checkedoutto', 'missingpart')
 
-	def create(self, request, *args, **kwargs):
+    def create(self, request, *args, **kwargs):
+        admin_or_401(request)
 
-		print(request.data.get('itemtype'))
-		print(request.data.get('owner'))
-		print(request.data.get('checkedoutto'))
+        serializer = api.ItemSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-		owner = api.User.objects.get(pk=request.data.get('owner').get('id'))
-		itemtype = request.gdata.get('itemtype')
+    def update(self, request, *args, **kwargs):
+        admin_or_401(request)
 
-		if request.data.get('checkedoutto') is not None:
-			checkedoutto = api.Checkout.objects.get(pk=request.data.get('checkedoutto').get('id'))
-		else:
-			checkedoutto = None
-		# owner = UserSerializer(get_object_or_404(User, user__id=request.data.get('owner')))
-		# serializer = ProfileSerializer(get_object_or_404(Profile, user__id=userid))
+        serializer = self.get_serializer(self.get_object(), data=request.data, partial=kwargs.pop('partial', False))
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
-		print(itemtype)
-		print(owner)
-		print(checkedoutto)
-
-		newItem = Item(
-			itemtype=itemtype,
-			owner=owner,
-			checkedoutto=checkedoutto
-		)
-		try:
-			newItem.clean_fields()
-		except ValidationError as e:
-			print(e)
-			print(str(request.data.get('itemtype')))
-			print(str(request.data.get('owner')))
-			print(str(request.data.get('checkedoutto')))
-			return Response({'success':False, 'error':e}, status=status.HTTP_400_BAD_REQUEST)
-
-		newItem.save()
-		return Response({'success': True}, status=status.HTTP_200_OK)
-
-	# def create(self, request):
-	#
-	# 	admin_or_401(request)
-	#
-	# 	serializer = api.ItemSerializer(data=request.data)
-	# 	if not serializer.is_valid():
-	# 		return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-	#
-	# 	serializer.save()
-	#
-	# 	return Response(serializer.data)
-
-	def update(self, request, *args, **kwargs):
-		admin_or_401(request)
-
-		partial = kwargs.pop('partial', False)
-		instance = self.get_object()
-		serializer = self.get_serializer(instance, data=request.data, partial=partial)
-		serializer.is_valid(raise_exception=True)
-		self.perform_update(serializer)
-
-		if getattr(instance, '_prefetched_objects_cache', None):
-			instance._prefetched_objects_cache = {}
-
-		return Response(serializer.data)
-
-	@action(detail=False)
-	def count(self, request):
-		owner = api.User.objects.get(pk=request.data.get('owner').get('id'))
-		items = Item.objects.all().filter(owner=owner)
-		countitems = items.aggregate(Count('owner'))
-		return Response({'count': countitems})
+    @action(detail=False)
+    def count(self, request):
+        owner = api.User.objects.get(pk=request.data.get('owner').get('id'))
+        items = Item.objects.all().filter(owner=owner)
+        countitems = items.aggregate(Count('owner'))
+        return Response({'count': countitems})
 
 
 class ItemTypeViewSet(viewsets.ModelViewSet):
-	"""
-	Endpoint to view the itemtypes
-	"""
-	resource_name = 'itemtypes'
-	serializer_class = api.ItemTypeSerializer
-	queryset = api.ItemType.objects.all()
-	permission_classes = (AllowAny,)
-	filter_fileds = ('id', 'partname', 'description', 'category', 'items')
+    """
+    Endpoint to view the itemtypes
+    """
+    resource_name = 'itemtypes'
+    serializer_class = api.ItemTypeSerializer
+    queryset = api.ItemType.objects.all()
+    permission_classes = (AllowAny,)
+    filter_fields = ('id', 'partname', 'description', 'category', 'items',)
 
-	def create(self, request, *args, **kwargs):
+    def create(self, request, *args, **kwargs):
+        admin_or_401(request)
 
-		print(request.data.get('partname'))
-		print(request.data.get('description'))
-		print(request.data.get('category'))
+        serializer = api.ItemTypeSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+    def update(self, request, *args, **kwargs):
+        admin_or_401(request)
 
-		partname = request.data.get('partname')
-		description = request.data.get('description')
-		category = request.gdata.get('category') # Maybe categoryname
+        serializer = self.get_serializer(self.get_object(), data=request.data, partial=kwargs.pop('partial', False))
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
-		print(partname)
-		print(description)
-		print(category)
+    @action(detail=False)
+    def count(self, request):
+        partname = self.request.query_params.get('partname', None)
+        items = ItemType.objects.all().filter(partname=partname)
+        countitems = items.aggregate(Count('partname'))
+        return Response({'count': countitems})
 
-		newItemType = ItemType(
-			partname=partname,
-			description=description,
-			category=category,
-		)
-		try:
-			newItemType.clean_fields()
-		except ValidationError as e:
-			print(e)
-			print(str(request.data.get('partname')))
-			print(str(request.data.get('description')))
-			print(str(request.data.get('category')))
-			return Response({'success':False, 'error':e}, status=status.HTTP_400_BAD_REQUEST)
-
-		newItemType.save()
-		return Response({'success': True}, status=status.HTTP_200_OK)
-
-
-	# def create(self, request):
-	# 
-	# 	admin_or_401(request)
-	# 
-	# 	serializer = api.ItemTypeSerializer(data=request.data)
-	# 	if not serializer.is_valid():
-	# 		return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-	# 
-	# 	serializer.save()
-	# 
-	# 	return Response(serializer.data)
-
-	def update(self, request, pk=None):
-		admin_or_401(request)
-
-		serializer = api.ItemTypeSerializer(data=request.data)
-		if not serializer.is_valid():
-			return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-		serializer.save()
-
-		return Response(serializer.data)
-
-	@action(detail=False)
-	def count(self, request):
-		partname = self.request.query_params.get('partname', None)
-		items = ItemType.objects.all().filter(partname=partname)
-		countitems = items.aggregate(Count('partname'))
-		return Response({'count': countitems})
-
-
-
+import json
 class CategoriesViewSet(viewsets.ModelViewSet):
-	"""
-	Endpoint to view the categories
-	"""
-	resource_name = 'categories'
-	serializer_class = api.CategorySerializer
-	queryset = api.Category.objects.all()
-	permission_classes = (AllowAny,)
-	filter_fileds = ('id', 'categoryname', 'description')
+    """
+    Endpoint to view the categories
+    """
+    resource_name = 'categories'
+    serializer_class = api.CategorySerializer
+    queryset = api.Category.objects.all()
+    permission_classes = (AllowAny,)
+    filter_fields = ('id', 'categoryname', 'description')
 
-	def create(self, request, *args, **kwargs):
+    def create(self, request, *args, **kwargs):
+        admin_or_401(request)
 
-		categoryname = request.data.get('categoryname')
-		description = request.data.get('description')
-		image = request.data.get('image')
+        format, imgstr = request.data.get('image').split(';base64,')
+        ext = format.split('/')[-1]
+        imageFile = ContentFile(base64.b64decode(imgstr), name=(request.data.get('categoryname') + '.' + ext))
 
-		# owner = UserSerializer(get_object_or_404(User, user__id=request.data.get('owner')))
-		# serializer = ProfileSerializer(get_object_or_404(Profile, user__id=userid))
+        newCategory = Category(
+            categoryname=request.data.get('categoryname'),
+            description=request.data.get('description'),
+            image=imageFile
+        )
+        try:
+            newCategory.clean_fields()
+        except ValidationError as e:
+            print(e)
+            print(str(request.data.get('categoryname')))
+            print(str(request.data.get('description')))
+            print(str(request.data.get('image')))
+            return Response({'success': False, 'error': e}, status=status.HTTP_400_BAD_REQUEST)
 
-		newCategory = Category(
-			categoryname=categoryname,
-			description=description,
-			image=image
-		)
-		try:
-			newCategory.clean_fields()
-		except ValidationError as e:
-			print(e)
-			print(str(request.data.get('categoryname')))
-			print(str(request.data.get('description')))
-			print(str(request.data.get('image')))
-			return Response({'success':False, 'error':e}, status=status.HTTP_400_BAD_REQUEST)
+        newCategory.save()
+        category = Category.objects.filter(pk=newCategory.id).values('categoryname', 'description', 'image')
+        data = {"type": "categories", "id": str(newCategory.id), "attributes": category[0]}
+        return Response(data, status=status.HTTP_200_OK)
 
-		newCategory.save()
-		return Response({'success': True}, status=status.HTTP_200_OK)
+    def update(self, request, *args, **kwargs):
+        admin_or_401(request)
 
-	# def create(self, request):
-	#
-	# 	admin_or_401(request)
-	#
-	# 	serializer = api.ItemSerializer(data=request.data)
-	# 	if not serializer.is_valid():
-	# 		return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-	#
-	# 	serializer.save()
-	#
-	# 	return Response(serializer.data)
+        serializer = self.get_serializer(self.get_object(), data=request.data, partial=kwargs.pop('partial', False))
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
-	def update(self, request, pk=None):
-		admin_or_401(request)
+    @action(detail=False)
+    def count(self, request):
+        categoryname = self.request.query_params.get('categoryname', None)
+        categories = Category.objects.all().filter(categoryname=categoryname)
+        countitems = categories.aggregate(Count('categoryname'))
+        return Response({'count': countitems})
 
-		serializer = api.ItemSerializer(data=request.data)
-		if not serializer.is_valid():
-			return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-		serializer.save()
-
-		return Response(serializer.data)
-
-	@action(detail=False)
-	def count(self, request):
-		categoryname = self.request.query_params.get('categoryname', None)
-		categories = Category.objects.all().filter(categoryname=categoryname)
-		countitems = categories.aggregate(Count('categoryname'))
-		return Response({'count': countitems})
 
 class UserViewSet(viewsets.ModelViewSet):
-	"""
-	Endpoint that allows user data to be viewed.
-	"""
-	resource_name = 'users'
-	serializer_class = api.UserSerializer
-	queryset = User.objects.all()
-	permission_classes = (IsAuthenticated,)
+    """
+    Endpoint that allows user data to be viewed.
+    """
+    resource_name = 'users'
+    serializer_class = api.UserSerializer
+    queryset = User.objects.all()
+    permission_classes = (IsAuthenticated,)
 
-	def get_queryset(self):
-		user = self.request.user
-		if user.is_superuser:
-			return User.objects.all()
-		return User.objects.filter(username=user.username)
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_superuser:
+            return User.objects.all()
+        return User.objects.filter(username=user.username)
 
+    def update(self, request, *args, **kwargs):
+        user = User.objects.get(pk=request.data.get('id'))
+        user.first_name = request.data.get('firstname')
+        user.last_name = request.data.get('lastname')
+        user.email = request.data.get('email')
+        saved = user.save(update_fields=['first_name', 'last_name', 'email'])
+
+        return Response(saved, status=status.HTTP_200_OK)
+    
 class ProfileViewSet(viewsets.ModelViewSet):
-	"""
-	Endpoint that allows user data to be viewed.
-	"""
-	resource_name = 'profiles'
-	serializer_class = api.ProfileSerializer
-	queryset = api.Profile.objects.all()
-	permission_classes = (IsAuthenticated,)
+    """
+    Endpoint that allows user data to be viewed.
+    """
+    resource_name = 'profiles'
+    serializer_class = api.ProfileSerializer
+    queryset = api.Profile.objects.all()
+    permission_classes = (IsAuthenticated,)
 
-	def get_queryset(self):
-		user = self.request.user
-		if user.is_superuser:
-			return api.Profile.objects.all()
-		return api.Profile.objects.filter(user__username=user.username)
-
-# class SourceViewSet(viewsets.ModelViewSet):
-#     """
-#     Source endpoint
-#     """
-#     resource_name = 'sources'
-#     queryset = api.Source.objects.all()
-#     serializer_class = api.SourceSerializer
-#     permission_classes = (AllowAny,)
-#     filter_backends = (DjangoFilterBackend,)
-#     filter_fields = ('name',)
-
-#     def create(self, request):
-#         admin_or_401(request)
-
-#         serializer = api.SourceSerializer(data=request.data)
-#         if not serializer.is_valid():
-#             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-#         serializer.save()
-
-#         return Response(serializer.data)
-
-#     def update(self, request, pk=None):
-#         admin_or_401(request)
-
-#         serializer = api.SourceSerializer(data=request.data)
-#         if not serializer.is_valid():
-#             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-#         serializer.save()
-
-#         return Response(serializer.data)
-
-
-# class ApplicanttypeViewSet(viewsets.ModelViewSet):
-#     """
-#     ApplicantType endpoint
-#     """
-#     resource_name = 'applicanttypes'
-#     queryset = api.Applicanttype.objects.all()
-#     serializer_class = api.ApplicanttypeSerializer
-#     permission_classes = (AllowAny,)
-#     filter_backends = (DjangoFilterBackend,)
-#     filter_fields = ('name',)
-
-#     def create(self, request):
-#         admin_or_401(request)
-
-#         serializer = api.ApplicanttypeSerializer(data=request.data)
-#         if not serializer.is_valid():
-#             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-#         serializer.save()
-
-#         return Response(serializer.data)
-
-#     def update(self, request, pk=None):
-#         admin_or_401(request)
-
-#         serializer = api.ApplicanttypeSerializer(data=request.data)
-#         if not serializer.is_valid():
-#             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-#         serializer.save()
-
-#         return Response(serializer.data)
-
-
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_superuser:
+            return api.Profile.objects.all()
+        return api.Profile.objects.filter(user__username=user.username)
 
 
 class Register(APIView):
-	permission_classes = (AllowAny,)
+    permission_classes = (AllowAny,)
 
-	def post(self, request, *args, **kwargs):
+    def post(self, request, *args, **kwargs):
         # Login
-		username = request.POST.get('username')
-		password = request.POST.get('password')
-		email = request.POST.get('email')
-		if username is not None and password is not None and email is not None:
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        email = request.POST.get('email')
+    
+        if username is not None and password is not None and email is not None:
 			lastname = request.POST.get('lastname')
 			firstname = request.POST.get('firstname')
 			address = request.POST.get('address')
 			phone = request.POST.get('phone')
-	        # org = request.POST.get('org')
-	        # college = request.POST.get('college')
-	        # dept = request.POST.get('dept')
-	        # other_details = request.POST.get('otherdetails')
-	        # areas_of_interest = request.POST.get('areasofinterest')
-	        # areas_of_interest = api.Areaofinterest.objects.get_or_create(name=areas_of_interest)
-
+			org = request.POST.get('org')
+			
 			if User.objects.filter(username=username).exists():
-				return Response({'username': 'Username is taken.', 'status': 'error'}) 
+				return Response({'msg': 'Username is taken.', 'status': 'error'})
 			elif User.objects.filter(email=email).exists():
-			    return Response({'email': 'Email is taken.', 'status': 'error'})
-			# especially before you pass them in here
-			newuser = User.objects.create_user(email=email, username=username, password=password, last_name=bleach.clean(lastname), first_name=bleach.clean(firstname))
- 
-			newprofile = api.Profile(user=newuser, address=address, phonenumber=phone)
+				return Response({'msg': 'Email is taken.', 'status': 'error'})
+
+            # especially before you pass them in here
+			newuser = User.objects.create_user(email=bleach.clean(email), username=bleach.clean(username), password=password, last_name=bleach.clean(
+                lastname), first_name=bleach.clean(firstname))
+
+			newprofile = api.Profile(
+                user=newuser, address=bleach.clean(address), phonenumber=bleach.clean(phone), org=bleach.clean(org))
 
 			newprofile.save()
-			# Send email msg
-			# send_templated_mail(
-			#     template_name='welcome',
-			#     from_email='from@example.com',
-			#     recipient_list=[email],
-			#     context={
-			#         'username':username,
-			#         'email':email,
-			#     },
-			#     # Optional:
-			#     # cc=['cc@example.com'],
-			#     # bcc=['bcc@example.com'],
-			# )
+
+			# This is so we can display the full organization name in the email
+			organizations = {
+				'unl': 'University of Nebraska - Lincoln',
+				'uno': 'University of Nebraska - Omaha',
+				'unmc': 'University of Nebraska Medical Center',
+				'unk': 'University of Nebraska - Kearney',
+				'other': 'Other',
+			}
+
+            # Send welcome email
+			send_templated_mail(
+                template_name='welcome',
+                from_email='unolendinglibrary@gmail.com',
+                recipient_list=[email],
+                context={
+                    'email': email,
+					'username': username,
+					'firstname': firstname,
+					'fullname': (firstname + ' ' + lastname),
+					'phone': phone,
+					'org': organizations[org],
+					'domain': 'http://localhost/'
+                },
+                # Optional:
+                # cc=['cc@example.com'],
+                # bcc=['bcc@example.com'],
+            )
+
+			user = authenticate(username=bleach.clean(username), password=password)
+			login(request, user)
+			
 			return Response({'status': 'success', 'userid': newuser.id, 'profile': newprofile.id})
-		else:
-			return Response({'status': 'error'})
+        else:
+            return Response({'status': 'error', 'msg': 'You must fill in all the form fields.'})
 
 
 class Session(APIView):
-	"""
-	Returns a JSON structure: {'isauthenticated':<T|F>,'userid': <int:None>,'username': <string|None>,'profileid': <int|None>}
-	"""
-	permission_classes = (AllowAny,)
-	def form_response(self, isauthenticated, userid, username, profileid, error=""):
-		data = {
-			'isauthenticated': 	isauthenticated,
-			'userid': 			userid,
-			'username': 		username,
-			'profileid':		profileid,
-		}
-		if error:
-			data['message'] = error
+    """
+    Returns a JSON structure: {'isauthenticated':<T|F>,'userid': <int:None>,'username': <string|None>,'profileid': <int|None>}
+    """
+    permission_classes = (AllowAny,)
 
-		return Response(data)
+    def form_response(self, isauthenticated, userid, username, profileid, error=""):
+        data = {
+            'isauthenticated': 	isauthenticated,
+                'userid': 			userid,
+                'username': 		username,
+                'profileid':		profileid,
+        }
+        if error:
+            data['message'] = error
 
-	def get(self, request, *args, **kwargs):
-		# Get the current user
-		user = request.user
-		if user.is_authenticated():
-			profile = get_object_or_404(api.Profile,user__username=user.username)
-			return self.form_response(True, user.id, user.username, profile.id)
-		return self.form_response(False, None, None, None)
+        return Response(data)
 
-	def post(self, request, *args, **kwargs):
-		print(request.data)
-		# Login
-		username = request.POST.get('username')
-		password = request.POST.get('password')
-		user = authenticate(username=username, password=password)
-		if user is not None:
-			if user.is_active:
-				login(request, user)
-				profile = get_object_or_404(api.Profile,user__username=user.username)
-				return self.form_response(True, user.id, user.username, profile.id)
-			return self.form_response(False, None, None, None, "Account is suspended")
-		return self.form_response(False, None, None, None, "Invalid username or password")
+    def get(self, request, *args, **kwargs):
+        # Get the current user
+        user = request.user
+        if user.is_authenticated():
+            profile = get_object_or_404(api.Profile, user__username=user.username)
+            return self.form_response(True, user.id, user.username, profile.id)
+        return self.form_response(False, None, None, None)
 
-	def delete(self, request, *args, **kwargs):
-		# Logout
-		logout(request)
-		return Response(status=status.HTTP_204_NO_CONTENT)
+    def post(self, request, *args, **kwargs):
+        # Login
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        user = authenticate(username=bleach.clean(username), password=password)
+        if user is not None:
+            if user.is_active:
+                login(request, user)
+                profile = get_object_or_404(api.Profile, user__username=user.username)
+                return self.form_response(True, user.id, user.username, profile.id)
+            return self.form_response(False, None, None, None, "Account is suspended")
+        return self.form_response(False, None, None, None, "Invalid username or password")
+
+    def delete(self, request, *args, **kwargs):
+        # Logout
+        logout(request)
+        return Response(status=status.HTTP_204_NO_CONTENT)

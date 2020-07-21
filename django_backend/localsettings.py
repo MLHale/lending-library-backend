@@ -23,11 +23,12 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'postgres',
         'USER': 'postgres',
+		'PASSWORD': 'password',
         'HOST': 'db',
         'PORT': 5432,
     }
 }
 
 ALLOWED_HOSTS = ['localhost', 'django']
-DEBUG=False
+DEBUG=True
 ENVIRONMENT = "DEV"

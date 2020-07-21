@@ -26,7 +26,6 @@ from .localsettings import *
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.10/howto/deployment/checklist/
 
@@ -173,10 +172,12 @@ TEMPLATED_EMAIL_BACKEND = 'templated_email.backends.vanilla_django'
 
 TEMPLATED_EMAIL_TEMPLATE_DIR = 'templated_email/' #use '' for top level template dir, ensure there is a trailing slash
 TEMPLATED_EMAIL_FILE_EXTENSION = 'email'
+
 #email host details - used gmail for dev
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_HOST_USER = 'user@gmail.com'
-EMAIL_HOST_PASSWORD = ''
+EMAIL_HOST_USER = 'unolendinglibrary@gmail.com'
+EMAIL_HOST_PASSWORD = 'jmuG29Ge56KN1tXBqkSx'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
@@ -184,3 +185,5 @@ DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 # For file upload
 MEDIA_URL = '../static/uploads/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'static/uploads/')
+
+LOGIN_URL = '/login'
